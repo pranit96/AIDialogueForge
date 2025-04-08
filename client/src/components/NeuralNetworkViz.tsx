@@ -22,11 +22,11 @@ interface Edge {
   delay: number;
 }
 
-export default function NeuralNetworkViz({
+export default function CosmicNetworkViz({
   className = '',
-  nodeCount = 25,
-  edgeCount = 35,
-  animationSpeed = 1
+  nodeCount = 40,
+  edgeCount = 60,
+  animationSpeed = 0.7
 }: NeuralNetworkVizProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -122,7 +122,7 @@ export default function NeuralNetworkViz({
   return (
     <div 
       ref={containerRef}
-      className={`neural-network relative overflow-hidden ${className}`}
+      className={`cosmic-network relative overflow-hidden ${className}`}
     >
       {edges.map((edge, index) => {
         const sourceNode = nodes[edge.source];
@@ -139,13 +139,14 @@ export default function NeuralNetworkViz({
         return (
           <div
             key={`edge-${index}`}
-            className="neural-edge animate-pulse-glow"
+            className="cosmic-connection animate-cosmic-pulse"
             style={{
               left: `${sourceNode.x}px`,
               top: `${sourceNode.y}px`,
               width: `${length}px`,
               transform: `rotate(${angle}deg)`,
-              animationDelay: `${edge.delay}s`
+              animationDelay: `${edge.delay}s`,
+              opacity: Math.min(0.8, 0.3 + Math.random() * 0.5)
             }}
           />
         );
@@ -154,11 +155,12 @@ export default function NeuralNetworkViz({
       {nodes.map(node => (
         <div
           key={`node-${node.id}`}
-          className="neural-node"
+          className="cosmic-node neural-node"
           style={{
             left: `${node.x}px`,
             top: `${node.y}px`,
-            animationDelay: `${node.pulseDelay}s`
+            animationDelay: `${node.pulseDelay}s`,
+            opacity: 0.3 + Math.random() * 0.7
           }}
         />
       ))}

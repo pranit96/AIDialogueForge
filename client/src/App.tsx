@@ -84,11 +84,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <div className="relative min-h-screen">
-          {/* Background hexagonal pattern */}
-          <div className="hex-pattern"></div>
+          {/* Cosmic background pattern */}
+          <div className="cosmic-pattern"></div>
           
-          {/* CRT scanlines effect */}
-          <div className="scan-lines"></div>
+          {/* Stellar dust particles */}
+          <div className="stellar-dust"></div>
           
           <Router />
           <Toaster />

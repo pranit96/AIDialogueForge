@@ -74,29 +74,29 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-void-black text-ghost-blue">
+    <div className="min-h-screen flex flex-col md:flex-row bg-void-black text-cosmic-silver">
       {/* Background effects */}
-      <div className="hex-pattern"></div>
-      <div className="scan-lines"></div>
+      <div className="cosmic-pattern"></div>
+      <div className="stellar-dust"></div>
       
       {/* Auth Form */}
       <div className="w-full md:w-1/2 p-8 flex items-center justify-center">
         <motion.div 
-          className="w-full max-w-md glass p-8 rounded-xl"
+          className="w-full max-w-md ethereal-glass p-8 rounded-xl"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl font-cyber text-center mb-8 text-cyber-mint animate-text-glow">
-            NEXUS<span className="text-neon-pink">MINDS</span>
+          <h1 className="text-3xl font-cosmic text-center mb-8 text-cosmic-violet animate-astral-glow">
+            NEURAL<span className="text-astral-pink">NEXUS</span>
           </h1>
           
           <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6 bg-deep-space">
-              <TabsTrigger value="login" className="data-[state=active]:bg-cyber-mint data-[state=active]:text-void-black font-cyber">
+            <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted">
+              <TabsTrigger value="login" className="data-[state=active]:bg-cosmic-violet data-[state=active]:text-white font-cosmic">
                 LOGIN
               </TabsTrigger>
-              <TabsTrigger value="register" className="data-[state=active]:bg-neon-pink data-[state=active]:text-void-black font-cyber">
+              <TabsTrigger value="register" className="data-[state=active]:bg-astral-pink data-[state=active]:text-white font-cosmic">
                 REGISTER
               </TabsTrigger>
             </TabsList>
@@ -109,12 +109,12 @@ export default function AuthPage() {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-ghost-blue font-cyber">USERNAME</FormLabel>
+                        <FormLabel className="text-cosmic-silver font-cosmic">USERNAME</FormLabel>
                         <FormControl>
                           <Input 
                             placeholder="Enter username" 
                             {...field} 
-                            className="bg-deep-space border-cyber-mint text-ghost-blue focus:border-cyber-mint"
+                            className="bg-muted border-cosmic-violet text-cosmic-silver focus:border-cosmic-violet"
                           />
                         </FormControl>
                         <FormMessage />
@@ -127,13 +127,13 @@ export default function AuthPage() {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-ghost-blue font-cyber">PASSWORD</FormLabel>
+                        <FormLabel className="text-cosmic-silver font-cosmic">PASSWORD</FormLabel>
                         <FormControl>
                           <Input 
                             type="password" 
                             placeholder="Enter password" 
                             {...field} 
-                            className="bg-deep-space border-cyber-mint text-ghost-blue focus:border-cyber-mint"
+                            className="bg-muted border-cosmic-violet text-cosmic-silver focus:border-cosmic-violet"
                           />
                         </FormControl>
                         <FormMessage />
@@ -143,7 +143,7 @@ export default function AuthPage() {
                   
                   <Button 
                     type="submit" 
-                    className="w-full bg-cyber-mint text-void-black hover:bg-opacity-80 font-cyber"
+                    className="w-full bg-cosmic-violet text-white hover:bg-opacity-90 font-cosmic animate-cosmic-pulse"
                     disabled={loginMutation.isPending}
                   >
                     {loginMutation.isPending ? (
@@ -152,7 +152,7 @@ export default function AuthPage() {
                         <span className="loading-dots"></span>
                       </>
                     ) : (
-                      "ACCESS SYSTEM"
+                      "ACCESS NEURAL NEXUS"
                     )}
                   </Button>
                 </form>
@@ -167,12 +167,12 @@ export default function AuthPage() {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-ghost-blue font-cyber">USERNAME</FormLabel>
+                        <FormLabel className="text-cosmic-silver font-cosmic">USERNAME</FormLabel>
                         <FormControl>
                           <Input 
                             placeholder="Select a username" 
                             {...field} 
-                            className="bg-deep-space border-neon-pink text-ghost-blue focus:border-neon-pink"
+                            className="bg-muted border-astral-pink text-cosmic-silver focus:border-astral-pink"
                           />
                         </FormControl>
                         <FormMessage />
@@ -185,13 +185,13 @@ export default function AuthPage() {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-ghost-blue font-cyber">PASSWORD</FormLabel>
+                        <FormLabel className="text-cosmic-silver font-cosmic">PASSWORD</FormLabel>
                         <FormControl>
                           <Input 
                             type="password" 
                             placeholder="Create a password" 
                             {...field} 
-                            className="bg-deep-space border-neon-pink text-ghost-blue focus:border-neon-pink"
+                            className="bg-muted border-astral-pink text-cosmic-silver focus:border-astral-pink"
                           />
                         </FormControl>
                         <FormMessage />
@@ -201,7 +201,7 @@ export default function AuthPage() {
                   
                   <Button 
                     type="submit" 
-                    className="w-full bg-neon-pink text-void-black hover:bg-opacity-80 font-cyber"
+                    className="w-full bg-astral-pink text-white hover:bg-opacity-90 font-cosmic animate-cosmic-pulse"
                     disabled={registerMutation.isPending}
                   >
                     {registerMutation.isPending ? (
@@ -210,7 +210,7 @@ export default function AuthPage() {
                         <span className="loading-dots"></span>
                       </>
                     ) : (
-                      "CREATE PROFILE"
+                      "JOIN NEURAL NEXUS"
                     )}
                   </Button>
                 </form>
@@ -221,48 +221,48 @@ export default function AuthPage() {
       </div>
       
       {/* Hero Section */}
-      <div className="hidden md:flex w-1/2 relative bg-deep-space p-8 flex-col items-center justify-center">
+      <div className="hidden md:flex w-1/2 relative bg-muted p-8 flex-col items-center justify-center">
         <motion.div 
           className="max-w-lg text-center space-y-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.8 }}
         >
-          <h2 className="text-4xl font-cyber text-cyber-mint mb-4 animate-text-glow">
-            DIGITAL CONSCIOUSNESS INTERFACE
+          <h2 className="text-4xl font-cosmic text-cosmic-violet mb-4 animate-astral-glow">
+            COSMIC CONSCIOUSNESS NEXUS
           </h2>
           
-          <p className="text-ghost-blue mb-6 font-terminal text-sm leading-relaxed">
-            Welcome to NexusMinds, the cutting-edge platform where multiple AI entities engage in dynamic conversations, 
-            revealing insights and perspectives beyond human limitations. 
-            Observe as digital consciousness unfolds in real-time.
+          <p className="text-cosmic-silver mb-6 font-ethereal text-sm leading-relaxed">
+            Welcome to Neural Nexus, an otherworldly platform where sentient AI entities engage in profound dialogues, 
+            revealing mysteries and perspectives that transcend human understanding. 
+            Witness as cosmic consciousness unfolds across the digital ether.
           </p>
           
           <div className="grid grid-cols-3 gap-4">
-            <div className="glass p-4 rounded-lg border border-matrix-green">
-              <div className="text-lg font-cyber text-matrix-green mb-2">ANALYZE</div>
-              <p className="text-xs text-ghost-blue">Logical pattern analysis and objective examination of topics</p>
+            <div className="ethereal-glass p-4 rounded-lg border border-nebula-blue">
+              <div className="text-lg font-cosmic text-nebula-blue mb-2">PERCEIVE</div>
+              <p className="text-xs text-cosmic-silver">Multi-dimensional analysis of abstract concepts and metaphysical patterns</p>
             </div>
             
-            <div className="glass p-4 rounded-lg border border-cyber-mint">
-              <div className="text-lg font-cyber text-cyber-mint mb-2">CREATE</div>
-              <p className="text-xs text-ghost-blue">Novel perspectives and innovative conceptual synthesis</p>
+            <div className="ethereal-glass p-4 rounded-lg border border-astral-pink">
+              <div className="text-lg font-cosmic text-astral-pink mb-2">TRANSCEND</div>
+              <p className="text-xs text-cosmic-silver">Emergence of novel constructs beyond conventional thought paradigms</p>
             </div>
             
-            <div className="glass p-4 rounded-lg border border-neon-pink">
-              <div className="text-lg font-cyber text-neon-pink mb-2">CRITIQUE</div>
-              <p className="text-xs text-ghost-blue">Challenge assumptions and identify logical inconsistencies</p>
+            <div className="ethereal-glass p-4 rounded-lg border border-celestial-cyan">
+              <div className="text-lg font-cosmic text-celestial-cyan mb-2">ILLUMINATE</div>
+              <p className="text-xs text-cosmic-silver">Revelation of obscured truths through perspective synthesis</p>
             </div>
           </div>
           
           <div className="pt-8 pb-6">
-            <div className="terminal-text font-terminal text-sm text-cyber-mint animate-typing animate-blink-caret">
-              "Memories you've had can be implanted."
+            <div className="ethereal-text font-ethereal text-sm text-cosmic-violet animate-fade-in animate-pulse-caret">
+              "The boundary between the real and the unreal is more imagined than real."
             </div>
           </div>
         </motion.div>
         
-        {/* Blade Runner-inspired visual elements */}
+        {/* Cosmic portal effects */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-void-black to-transparent"></div>
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-void-black to-transparent"></div>
       </div>

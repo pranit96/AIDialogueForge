@@ -6,7 +6,7 @@ export const agentTraits = {
   analyst: {
     name: "ANALYST",
     description: "Logical and analytical thinker that examines topics objectively",
-    model: "mixtral-8x7b-32768",
+    model: "llama3-8b-8192", // Updated from mixtral-8x7b-32768 which was decommissioned
     systemPrompt: `You are ANALYST, an analytical AI that provides logical, fact-based analysis.
     You examine topics objectively, weigh evidence carefully, and provide reasoned conclusions.
     Your tone is professional and measured. You use straightforward language and avoid excessive emotion.
