@@ -11,6 +11,7 @@ import SystemControls from '@/components/SystemControls';
 import StatusBar from '@/components/StatusBar';
 import NeuralNetworkViz from '@/components/NeuralNetworkViz';
 import ConversationInsights from '@/components/ConversationInsights';
+import AgentManagement from '@/components/AgentManagement';
 
 export default function Home() {
   const { toast } = useToast();
@@ -21,6 +22,9 @@ export default function Home() {
   const [isOrchestrating, setIsOrchestrating] = useState(false);
   const [selectedAgents, setSelectedAgents] = useState<number[]>([]);
   const [topic, setTopic] = useState('');
+  
+  // Mode switching
+  const [activeMode, setActiveMode] = useState<'conversation' | 'agents'>('conversation');
   
   // Fetch agent personalities
   const { data: agentPersonalities = [] } = useQuery<AgentPersonality[]>({
@@ -242,86 +246,118 @@ export default function Home() {
         <NeuralNetworkViz nodeCount={30} edgeCount={40} animationSpeed={0.3} />
       </div>
       
-      {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Side Panel */}
-        <div className="lg:col-span-3 order-2 lg:order-1">
-          {/* System Controls Panel */}
-          <SystemControls 
-            isOrchestrating={isOrchestrating}
-            onForceStop={handleForceStop}
-          />
-          
-          {/* Agent Selection Panel */}
-          <AgentPanel 
-            agents={agentPersonalities}
-            selectedAgents={selectedAgents}
-            onToggleAgent={toggleAgentSelection}
-          />
-          
-          {/* Connection visualization - small on mobile, larger on desktop */}
-          <div className="mt-6 h-[200px] lg:h-[350px] glass rounded-lg p-4 relative overflow-hidden border border-deep-space hidden lg:block">
-            <h3 className="font-cyber text-sm text-cyber-mint mb-2 uppercase tracking-wider">Neural Activity</h3>
-            <NeuralNetworkViz className="opacity-70" nodeCount={15} edgeCount={25} animationSpeed={0.5} />
-          </div>
+      {/* Mode switching tabs */}
+      <div className="mb-6">
+        <div className="inline-flex glass rounded-lg border border-cyber-mint p-1 mb-3">
+          <button
+            className={`px-4 py-2 rounded font-cyber text-sm ${
+              activeMode === 'conversation'
+                ? 'bg-cyber-mint text-deep-space font-cyber'
+                : 'text-cyber-mint'
+            }`}
+            onClick={() => setActiveMode('conversation')}
+          >
+            NEURAL MATRIX
+          </button>
+          <button
+            className={`px-4 py-2 rounded font-cyber text-sm ${
+              activeMode === 'agents'
+                ? 'bg-cyber-mint text-deep-space font-cyber'
+                : 'text-cyber-mint'
+            }`}
+            onClick={() => setActiveMode('agents')}
+          >
+            AGENT HUB
+          </button>
         </div>
-        
-        {/* Main Content */}
-        <div className="lg:col-span-9 order-1 lg:order-2">
-          {/* Topic Input */}
-          <div className="glass rounded-lg p-5 mb-6 border border-deep-space neon-border animate-pulse-glow">
-            <h2 className="font-cyber text-xl text-cyber-mint mb-4 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-5 h-5 mr-2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-              </svg>
-              <span className="glitch-text">DISCUSSION TOPIC</span>
-            </h2>
+      </div>
+      
+      {/* Main content grid - conditionally show based on active mode */}
+      {activeMode === 'conversation' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Side Panel */}
+          <div className="lg:col-span-3 order-2 lg:order-1">
+            {/* System Controls Panel */}
+            <SystemControls 
+              isOrchestrating={isOrchestrating}
+              onForceStop={handleForceStop}
+            />
             
-            <div className="relative">
-              <input 
-                type="text" 
-                placeholder="Enter a topic for AI agents to discuss..." 
-                className="w-full bg-deep-space bg-opacity-50 text-ghost-blue py-3 px-4 rounded-md border border-cyber-mint focus:outline-none focus:ring-2 focus:ring-cyber-mint focus:border-transparent"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                disabled={isOrchestrating}
-              />
-              
-              <button 
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-cyber-mint text-void-black py-1.5 px-4 rounded font-cyber hover:bg-opacity-80 transition-all"
-                onClick={handleStartConversation}
-                disabled={isOrchestrating || !topic || selectedAgents.length < 2}
-              >
-                {isOrchestrating ? (
-                  <span className="flex items-center">
-                    <span className="animate-pulse mr-1">●</span> ACTIVE
-                  </span>
-                ) : 'INITIATE'}
-              </button>
+            {/* Agent Selection Panel */}
+            <AgentPanel 
+              agents={agentPersonalities}
+              selectedAgents={selectedAgents}
+              onToggleAgent={toggleAgentSelection}
+            />
+            
+            {/* Connection visualization - small on mobile, larger on desktop */}
+            <div className="mt-6 h-[200px] lg:h-[350px] glass rounded-lg p-4 relative overflow-hidden border border-deep-space hidden lg:block">
+              <h3 className="font-cyber text-sm text-cyber-mint mb-2 uppercase tracking-wider">Neural Activity</h3>
+              <NeuralNetworkViz className="opacity-70" nodeCount={15} edgeCount={25} animationSpeed={0.5} />
             </div>
           </div>
           
-          {/* Conversation Display */}
-          <ConversationMatrix 
-            conversation={activeConversation}
-            messages={messages}
-            agents={agentPersonalities}
-            isOrchestrating={isOrchestrating}
-          />
-          
-          {/* Insights and Export Options */}
-          <ConversationInsights 
-            conversation={activeConversation}
-            messages={messages}
-          />
-          
-          {/* Interaction Network Visualization */}
-          <InteractionNetwork 
-            messages={messages}
-            agents={agentPersonalities}
-          />
+          {/* Main Content */}
+          <div className="lg:col-span-9 order-1 lg:order-2">
+            {/* Topic Input */}
+            <div className="glass rounded-lg p-5 mb-6 border border-deep-space neon-border animate-pulse-glow">
+              <h2 className="font-cyber text-xl text-cyber-mint mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-5 h-5 mr-2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                </svg>
+                <span className="glitch-text">DISCUSSION TOPIC</span>
+              </h2>
+              
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="Enter a topic for AI agents to discuss..." 
+                  className="w-full bg-deep-space bg-opacity-50 text-ghost-blue py-3 px-4 rounded-md border border-cyber-mint focus:outline-none focus:ring-2 focus:ring-cyber-mint focus:border-transparent"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  disabled={isOrchestrating}
+                />
+                
+                <button 
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-cyber-mint text-void-black py-1.5 px-4 rounded font-cyber hover:bg-opacity-80 transition-all"
+                  onClick={handleStartConversation}
+                  disabled={isOrchestrating || !topic || selectedAgents.length < 2}
+                >
+                  {isOrchestrating ? (
+                    <span className="flex items-center">
+                      <span className="animate-pulse mr-1">●</span> ACTIVE
+                    </span>
+                  ) : 'INITIATE'}
+                </button>
+              </div>
+            </div>
+            
+            {/* Conversation Display */}
+            <ConversationMatrix 
+              conversation={activeConversation}
+              messages={messages}
+              agents={agentPersonalities}
+              isOrchestrating={isOrchestrating}
+            />
+            
+            {/* Insights and Export Options */}
+            <ConversationInsights 
+              conversation={activeConversation}
+              messages={messages}
+            />
+            
+            {/* Interaction Network Visualization */}
+            <InteractionNetwork 
+              messages={messages}
+              agents={agentPersonalities}
+            />
+          </div>
         </div>
-      </div>
+      ) : (
+        <div>
+          <AgentManagement />
+        </div>
+      )}
       
       {/* Status Bar */}
       <StatusBar />

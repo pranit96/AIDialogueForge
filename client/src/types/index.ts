@@ -7,6 +7,16 @@ export interface AgentPersonality {
   systemPrompt: string;
   color: string;
   active: boolean;
+  avatar?: string;
+  voiceType?: string;
+  personalityTraits?: string[];
+  knowledgeDomains?: string[];
+  responseStyle?: string;
+  temperature?: string;
+  userId?: number;
+  isPublic?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Conversation types

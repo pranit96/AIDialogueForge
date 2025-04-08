@@ -28,6 +28,7 @@ export interface IStorage {
   getAgentPersonality(id: number): Promise<AgentPersonality | undefined>;
   createAgentPersonality(personality: InsertAgentPersonality): Promise<AgentPersonality>;
   updateAgentPersonality(id: number, personality: Partial<AgentPersonality>): Promise<AgentPersonality | undefined>;
+  deleteAgentPersonality(id: number): Promise<boolean>;
   
   // Conversation operations
   getConversations(userId?: number): Promise<Conversation[]>;
@@ -92,6 +93,19 @@ export class DatabaseStorage implements IStorage {
       .where(eq(agentPersonalities.id, id))
       .returning();
     return updatedPersonality;
+  }
+  
+  async deleteAgentPersonality(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(agentPersonalities)
+        .where(eq(agentPersonalities.id, id))
+        .returning();
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting agent personality:', error);
+      return false;
+    }
   }
   
   // Conversation operations

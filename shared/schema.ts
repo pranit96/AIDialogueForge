@@ -40,6 +40,8 @@ export const agentPersonalities = pgTable("agent_personalities", {
 
 export const insertAgentPersonalitySchema = createInsertSchema(agentPersonalities).omit({
   id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export type InsertAgentPersonality = z.infer<typeof insertAgentPersonalitySchema>;

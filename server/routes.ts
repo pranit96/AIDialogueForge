@@ -6,7 +6,8 @@ import { WebSocketServer } from "ws";
 import { z } from "zod";
 import { 
   insertConversationSchema, 
-  insertMessageSchema, 
+  insertMessageSchema,
+  insertAgentPersonalitySchema,
   type AgentPersonality 
 } from "@shared/schema";
 import { ZodError } from "zod-validation-error";
@@ -138,6 +139,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(personalities);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch agent personalities" });
+    }
+  });
+  
+  // Create a new agent personality
+  app.post("/api/agent-personalities", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.user?.id;
+      
+      // Validate request body
+      const validatedData = insertAgentPersonalitySchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      // Create new agent personality
+      const personality = await storage.createAgentPersonality(validatedData);
+      
+      res.status(201).json(personality);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid input data", details: error.errors });
+      }
+      console.error("Error creating agent personality:", error);
+      res.status(500).json({ error: "Failed to create agent personality" });
+    }
+  });
+  
+  // Update an agent personality
+  app.patch("/api/agent-personalities/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.user?.id;
+      const id = parseInt(req.params.id);
+      
+      // Get the existing personality
+      const existingPersonality = await storage.getAgentPersonality(id);
+      
+      if (!existingPersonality) {
+        return res.status(404).json({ error: "Agent personality not found" });
+      }
+      
+      // Check if user owns this personality or if it's a system one
+      if (existingPersonality.userId && existingPersonality.userId !== userId) {
+        return res.status(403).json({ error: "You don't have permission to modify this agent" });
+      }
+      
+      // Update the personality
+      const updatedPersonality = await storage.updateAgentPersonality(id, req.body);
+      
+      if (!updatedPersonality) {
+        return res.status(404).json({ error: "Agent personality not found" });
+      }
+      
+      res.json(updatedPersonality);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid input data", details: error.errors });
+      }
+      console.error("Error updating agent personality:", error);
+      res.status(500).json({ error: "Failed to update agent personality" });
+    }
+  });
+  
+  // Delete an agent personality
+  app.delete("/api/agent-personalities/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.user?.id;
+      const id = parseInt(req.params.id);
+      
+      // Get the existing personality
+      const existingPersonality = await storage.getAgentPersonality(id);
+      
+      if (!existingPersonality) {
+        return res.status(404).json({ error: "Agent personality not found" });
+      }
+      
+      // Check if user owns this personality
+      if (existingPersonality.userId && existingPersonality.userId !== userId) {
+        return res.status(403).json({ error: "You don't have permission to delete this agent" });
+      }
+      
+      // Don't allow deletion of system agents (ones without userId)
+      if (!existingPersonality.userId) {
+        return res.status(403).json({ error: "System agents cannot be deleted" });
+      }
+      
+      // Delete the personality
+      const deleted = await storage.deleteAgentPersonality(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ error: "Agent personality not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting agent personality:", error);
+      res.status(500).json({ error: "Failed to delete agent personality" });
     }
   });
   
