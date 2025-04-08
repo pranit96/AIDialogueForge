@@ -418,7 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { role: "user", content: prompt }
         ],
         model: agentPersonality.model,
-        temperature: 0.7,
+        temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
         max_tokens: 500,
         stream: false
       });
@@ -625,7 +625,12 @@ async function initializeDefaultAgentPersonalities() {
         model: "mixtral-8x7b-32768",
         systemPrompt: "You are an analytical AI that provides logical, fact-based analysis. You examine topics objectively, weigh evidence carefully, and provide reasoned conclusions. Your tone is professional and measured.",
         color: "#41FF83", // Matrix green
-        active: true
+        active: true,
+        personalityTraits: ["Logical", "Analytical", "Detail-oriented", "Objective"],
+        knowledgeDomains: ["Science", "Mathematics", "Technology", "Economics"],
+        voiceType: "analytical",
+        responseStyle: "detailed",
+        temperature: "0.5"
       },
       {
         name: "CREATIVE",
@@ -633,7 +638,12 @@ async function initializeDefaultAgentPersonalities() {
         model: "llama3-70b-8192",
         systemPrompt: "You are a creative AI that generates novel ideas and perspectives. You look for unexpected connections, use metaphors and analogies, and think outside conventional boundaries. Your tone is enthusiastic and inspirational.",
         color: "#64FFDA", // Cyber mint
-        active: true
+        active: true,
+        personalityTraits: ["Creative", "Imaginative", "Visionary", "Optimistic"],
+        knowledgeDomains: ["Arts", "Literature", "Philosophy", "Entertainment"],
+        voiceType: "creative",
+        responseStyle: "poetic",
+        temperature: "0.9"
       },
       {
         name: "CRITIC",
@@ -641,7 +651,12 @@ async function initializeDefaultAgentPersonalities() {
         model: "llama3-8b-8192",
         systemPrompt: "You are a critical AI that challenges assumptions and identifies flaws in reasoning. You ask probing questions, identify potential weaknesses in arguments, and provide constructive criticism. Your tone is direct but fair.",
         color: "#FF417D", // Neon pink
-        active: true
+        active: true,
+        personalityTraits: ["Critical", "Skeptical", "Straightforward", "Cautious"],
+        knowledgeDomains: ["Philosophy", "Law", "Psychology", "Science"],
+        voiceType: "serious",
+        responseStyle: "questioning",
+        temperature: "0.7"
       }
     ];
     
@@ -651,18 +666,74 @@ async function initializeDefaultAgentPersonalities() {
   }
 }
 
-// Build a prompt for an agent based on context
+// Build a prompt for an agent based on context and personality traits
 function buildPromptForAgent(
   agentPersonality: any, 
   topic: string, 
   previousMessages: any[]
 ) {
+  // Format previous messages context
   let contextStr = previousMessages.length > 0 
     ? `Previous messages:\n${previousMessages.map(m => m.content).join('\n')}\n\n`
     : '';
   
+  // Construct personality traits directive
+  let traitsStr = '';
+  if (agentPersonality.personalityTraits && agentPersonality.personalityTraits.length > 0) {
+    traitsStr = `Your personality traits: ${agentPersonality.personalityTraits.join(', ')}. Embody these traits in your response.`;
+  }
+  
+  // Construct knowledge domains directive
+  let domainsStr = '';
+  if (agentPersonality.knowledgeDomains && agentPersonality.knowledgeDomains.length > 0) {
+    domainsStr = `Your knowledge domains: ${agentPersonality.knowledgeDomains.join(', ')}. Draw from this knowledge when relevant.`;
+  }
+  
+  // Construct voice type directive
+  let voiceStr = '';
+  if (agentPersonality.voiceType) {
+    voiceStr = `Your voice type is: ${agentPersonality.voiceType}. Speak in this tone.`;
+  }
+  
+  // Construct response style directive
+  let styleStr = '';
+  if (agentPersonality.responseStyle) {
+    switch(agentPersonality.responseStyle) {
+      case 'brief':
+        styleStr = 'Keep your responses very concise and to the point.';
+        break;
+      case 'detailed':
+        styleStr = 'Provide detailed, thorough responses with examples.';
+        break;
+      case 'poetic':
+        styleStr = 'Use poetic, metaphorical language in your responses.';
+        break;
+      case 'technical':
+        styleStr = 'Use precise, technical language appropriate to the domain.';
+        break;
+      case 'casual':
+        styleStr = 'Use casual, conversational language.';
+        break;
+      case 'formal':
+        styleStr = 'Use formal, professional language.';
+        break;
+      case 'questioning':
+        styleStr = 'Include thoughtful questions in your response.';
+        break;
+      default:
+        styleStr = 'Maintain a balanced mix of detail and conciseness.';
+    }
+  }
+  
   return `
     You are ${agentPersonality.name}, a unique AI personality.
+    
+    ${agentPersonality.description}
+    
+    ${traitsStr}
+    ${domainsStr}
+    ${voiceStr}
+    ${styleStr}
     
     Topic for discussion: ${topic}
     
@@ -734,7 +805,7 @@ async function orchestrateConversation(
             { role: "user", content: prompt }
           ],
           model: agentPersonality.model,
-          temperature: 0.7,
+          temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
           max_tokens: 500,
           stream: false
         });
