@@ -26,6 +26,16 @@ export const agentPersonalities = pgTable("agent_personalities", {
   systemPrompt: text("system_prompt").notNull(),
   color: text("color").notNull(),
   active: boolean("active").default(true),
+  avatar: text("avatar"), // Optional avatar image URL or icon identifier
+  voiceType: text("voice_type").default("neutral"), // Voice characteristics: analytical, creative, dramatic, etc.
+  personalityTraits: text("personality_traits").array(), // Array of traits like "logical", "emotional", "creative", etc.
+  knowledgeDomains: text("knowledge_domains").array(), // Areas of expertise
+  responseStyle: text("response_style").default("balanced"), // brief, detailed, poetic, technical, etc.
+  temperature: text("temperature").default("0.7"), // Model temperature for varied responses
+  userId: integer("user_id").references(() => users.id), // Creator of the custom agent
+  isPublic: boolean("is_public").default(false), // Whether other users can use this agent
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertAgentPersonalitySchema = createInsertSchema(agentPersonalities).omit({

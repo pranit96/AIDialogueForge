@@ -11,6 +11,10 @@ import {
 } from "@shared/schema";
 import { ZodError } from "zod-validation-error";
 
+// Rate limiting maps
+const insightRateLimits = new Map<string, number[]>(); // IP -> timestamp[]
+const orchestrationRateLimits = new Map<string, number[]>(); // IP -> timestamp[]
+
 // Initialize Groq client
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY || "",
@@ -357,6 +361,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Apply rate limiting - 3 orchestrations per 5 minutes per IP
+      const ip = req.ip || req.socket.remoteAddress || 'unknown';
+      const now = Date.now();
+      
+      if (!orchestrationRateLimits.has(ip)) {
+        orchestrationRateLimits.set(ip, []);
+      }
+      
+      const requests = orchestrationRateLimits.get(ip)!;
+      // Remove requests older than 5 minutes
+      const recentRequests = requests.filter(time => now - time < 5 * 60 * 1000);
+      
+      if (recentRequests.length >= 3) {
+        return res.status(429).json({
+          error: 'Rate limit exceeded. Please try again later.',
+          retryAfter: 5 * 60 - Math.floor((now - recentRequests[0]) / 1000)
+        });
+      }
+      
+      // Add this request to the list
+      recentRequests.push(now);
+      orchestrationRateLimits.set(ip, recentRequests);
+      
       // Get conversation to check ownership
       const conversation = await storage.getConversation(conversationId);
       if (!conversation) {
@@ -376,6 +403,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error starting orchestration:", error);
       res.status(500).json({ error: "Failed to start conversation orchestration" });
+    }
+  });
+  
+  // Generate insights from a conversation
+  app.post("/api/conversations/:id/insights", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.user?.id;
+      
+      // Rate limiting check (3 requests per minute per IP)
+      const ip = req.ip || req.socket.remoteAddress || 'unknown';
+      const now = Date.now();
+      
+      // Simple in-memory rate limiting
+      if (!insightRateLimits.has(ip)) {
+        insightRateLimits.set(ip, []);
+      }
+      
+      const requests = insightRateLimits.get(ip)!;
+      // Remove requests older than 1 minute
+      const recentRequests = requests.filter(time => now - time < 60 * 1000);
+      
+      if (recentRequests.length >= 3) {
+        return res.status(429).json({ 
+          error: 'Rate limit exceeded. Please try again later.',
+          retryAfter: 60 - Math.floor((now - recentRequests[0]) / 1000)
+        });
+      }
+      
+      // Add this request to the list
+      recentRequests.push(now);
+      insightRateLimits.set(ip, recentRequests);
+      
+      const conversationId = parseInt(req.params.id);
+      
+      // Get the conversation and check ownership
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ error: "Conversation not found" });
+      }
+      
+      // If the conversation has a userId, make sure it belongs to the current user
+      if (conversation.userId && conversation.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      const messages = await storage.getMessagesForConversation(conversationId);
+      if (messages.length === 0) {
+        return res.status(400).json({ error: "No messages in conversation to analyze" });
+      }
+      
+      // Get all agent personalities to enrich message context
+      const agentPersonalities = await storage.getAgentPersonalities();
+      
+      // Format the conversation for analysis
+      const conversationText = messages.map(msg => {
+        const agent = agentPersonalities.find(a => a.id === msg.agentPersonalityId);
+        return `${agent?.name || 'Unknown'}: ${msg.content}`;
+      }).join('\n\n');
+      
+      // Get insights using Groq API
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an AI conversation analyst. Generate key insights from the conversation transcript provided. Identify main themes, key points of agreement/disagreement, and any interesting patterns. Format your response as an array of concise insights, each 1-2 sentences.'
+          },
+          {
+            role: 'user', 
+            content: `Topic: ${conversation.topic}\n\nConversation:\n${conversationText}\n\nGenerate 5 key insights from this conversation.`
+          }
+        ],
+        model: 'llama3-8b-8192',  // Use a smaller, faster model for insights
+        temperature: 0.7,
+        max_tokens: 400,
+      });
+      
+      const response = completion.choices[0].message.content || '';
+      
+      // Parse the insights from the response
+      const insightLines = response
+        .split('\n')
+        .filter(line => line.trim().length > 0)
+        .map(line => line.replace(/^\d+\.\s*/, '').trim());  // Remove numbering
+        
+      // Return the insights
+      res.json({ insights: insightLines.slice(0, 5) });
+      
+    } catch (error) {
+      console.error('Error generating insights:', error);
+      res.status(500).json({ error: 'Failed to generate insights' });
     }
   });
   

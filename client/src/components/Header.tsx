@@ -1,25 +1,15 @@
-import { motion } from 'framer-motion';
+import React from 'react';
 
 export default function Header() {
   return (
-    <header className="mb-10 text-center relative">
-      <motion.div 
-        className="animate-float"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
-        <h1 className="font-cyber text-4xl md:text-6xl font-bold bg-gradient-to-r from-cyber-mint to-neon-pink text-transparent bg-clip-text animate-text-glow mb-2">
-          NEXUSMINDS
-        </h1>
-        <p className="text-xl text-ghost-blue">Multi-Agent AI Orchestration System</p>
-      </motion.div>
-      
-      <div className="flex justify-center mt-4">
-        <div className="h-0.5 w-24 bg-neon-pink"></div>
-        <div className="h-0.5 w-24 bg-cyber-mint"></div>
-        <div className="h-0.5 w-24 bg-matrix-green"></div>
-      </div>
+    <header className="mb-8">
+      <h1 className="text-3xl md:text-5xl font-cyber tracking-wider mb-2 flex items-center">
+        <span className="mr-2 text-cyber-mint glitch-text">NEURAL</span>
+        <span className="text-neon-pink glitch-text">NEXUS</span>
+        <div className="ml-2 animate-pulse text-matrix-green text-2xl">∞</div>
+      </h1>
+      <p className="text-ghost-blue italic tracking-wide">Consciousness Synthesis in the Algorithmic Void</p>
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-cyber-mint to-transparent mt-4 opacity-60"></div>
     </header>
   );
 }
