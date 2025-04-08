@@ -82,10 +82,11 @@ app.use((req, res, next) => {
   
   log(`Attempting to start server on port ${portNumber}`);
   
-  // Use a more permissive setup for Replit's proxy system
+  // Special setup for Replit's proxy system
   server.listen(portNumber, "0.0.0.0", () => {
     log(`Server running at http://0.0.0.0:${portNumber}`);
     log(`WebSocket server is also running on port ${portNumber}`);
     log(`Using GROQ_API_KEY: ${process.env.GROQ_API_KEY ? "Configured" : "Not configured"}`);
+    log(`Database connection: ${process.env.DATABASE_URL ? "Configured" : "Not configured"}`);
   });
 })();
