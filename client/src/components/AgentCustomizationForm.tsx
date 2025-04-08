@@ -63,9 +63,8 @@ const RESPONSE_STYLES = [
   { value: 'questioning', label: 'Questioning' },
 ];
 
-// Available models
+// Available models - updated to include only those currently supported by Groq (2025-04-08)
 const AVAILABLE_MODELS = [
-  { value: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B' },
   { value: 'llama3-70b-8192', label: 'Llama 3 70B' },
   { value: 'llama3-8b-8192', label: 'Llama 3 8B' },
   { value: 'gemma-7b-it', label: 'Gemma 7B' },
@@ -147,7 +146,7 @@ export default function AgentCustomizationForm({ existingAgent, onCancel }: Agen
     } : {
       name: '',
       description: '',
-      model: 'llama3-8b-8192',
+      model: 'llama3-8b-8192', // Default to reliable small model
       systemPrompt: 'You are a helpful AI assistant that responds in a clear, concise manner.',
       color: '#64FFDA',
       active: true,

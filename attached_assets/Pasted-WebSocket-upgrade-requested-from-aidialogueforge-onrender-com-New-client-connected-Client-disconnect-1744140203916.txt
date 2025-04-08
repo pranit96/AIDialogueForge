@@ -1,0 +1,50 @@
+WebSocket upgrade requested from aidialogueforge.onrender.com
+New client connected
+Client disconnected. Code: 1006, Reason: 
+7:22:30 PM [express] POST /api/conversations 201 in 776ms :: {"id":1,"topic":"my girlfriend is is fe…
+Client disconnected. Code: 1005, Reason: 
+7:22:31 PM [express] POST /api/conversations/orchestrate 200 in 207ms :: {"success":true,"message":"…
+Error in conversation orchestration: BadRequestError: 400 {"error":{"message":"The model `mixtral-8x7b-32768` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.","type":"invalid_request_error","code":"model_decommissioned"}}
+    at APIError.generate (file:///opt/render/project/src/node_modules/groq-sdk/error.mjs:36:20)
+    at Groq.makeStatusError (file:///opt/render/project/src/node_modules/groq-sdk/core.mjs:284:25)
+    at Groq.makeRequest (file:///opt/render/project/src/node_modules/groq-sdk/core.mjs:328:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async orchestrateConversation (file:///opt/render/project/src/dist/index.js:877:28) {
+  status: 400,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cache-control': 'private, max-age=0, no-store, no-cache, must-revalidate',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '92d4224b190f96ba-PDX',
+    connection: 'keep-alive',
+    'content-length': '279',
+    'content-type': 'application/json',
+    date: 'Tue, 08 Apr 2025 19:22:31 GMT',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=Zu089.7EACznSEoJ9YeOWnjim27Jq8r.g1p.lyAIzoo-1744140151-1.0.1.1-WSs0pL170dEgx6VJVutuzf6FmvYEXFeot8bRB8e_FQxWCAU2mKl2BIhSy0.nwmpPtMnPhSNnHE9zRMO3Q4VBre6dqJXdx8BFz7Kx7ncVtBc; path=/; expires=Tue, 08-Apr-25 19:52:31 GMT; domain=.groq.com; HttpOnly; Secure; SameSite=None',
+    vary: 'Origin, Accept-Encoding',
+    via: '1.1 google',
+    'x-groq-region': 'us-west-1',
+    'x-request-id': 'req_01jrbdnarpesbrjjrmt0gm434s'
+  },
+  error: {
+    error: {
+      message: 'The model `mixtral-8x7b-32768` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.',
+      type: 'invalid_request_error',
+      code: 'model_decommissioned'
+    }
+  }
+}
+WebSocket upgrade requested from aidialogueforge.onrender.com
+New client connected
+Client disconnected. Code: 1001, Reason: 
+Client disconnected. Code: 1001, Reason: 
+7:22:35 PM [express] GET /api/user 200 in 152ms :: {"id":1,"username":"aaa","password":"79791837c105…
+7:22:36 PM [express] GET /api/agent-personalities 304 in 206ms :: [{"id":1,"name":"ANALYST","descrip…
+WebSocket upgrade requested from aidialogueforge.onrender.com
+New client connected
+WebSocket upgrade requested from aidialogueforge.onrender.com
+New client connected
+You can also use theRender CLIto explore logs in your command line.
+
+Looking for more logs? Try Log Streams.

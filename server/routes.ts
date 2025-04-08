@@ -649,12 +649,12 @@ async function initializeDefaultAgentPersonalities() {
   const existingPersonalities = await storage.getAgentPersonalities();
   
   if (existingPersonalities.length === 0) {
-    // Create default agent personalities
+    // Create default agent personalities with currently supported Groq models
     const defaultPersonalities = [
       {
         name: "ANALYST",
         description: "Logical and analytical thinker that examines topics objectively",
-        model: "mixtral-8x7b-32768",
+        model: "llama3-8b-8192", // Updated from mixtral-8x7b-32768 which was decommissioned
         systemPrompt: "You are an analytical AI that provides logical, fact-based analysis. You examine topics objectively, weigh evidence carefully, and provide reasoned conclusions. Your tone is professional and measured.",
         color: "#41FF83", // Matrix green
         active: true,
@@ -667,7 +667,7 @@ async function initializeDefaultAgentPersonalities() {
       {
         name: "CREATIVE",
         description: "Imaginative thinker that offers novel perspectives and ideas",
-        model: "llama3-70b-8192",
+        model: "llama3-70b-8192", // This model should still be supported
         systemPrompt: "You are a creative AI that generates novel ideas and perspectives. You look for unexpected connections, use metaphors and analogies, and think outside conventional boundaries. Your tone is enthusiastic and inspirational.",
         color: "#64FFDA", // Cyber mint
         active: true,
@@ -680,7 +680,7 @@ async function initializeDefaultAgentPersonalities() {
       {
         name: "CRITIC",
         description: "Critical thinker that challenges assumptions and identifies flaws",
-        model: "llama3-8b-8192",
+        model: "llama3-8b-8192", // This model should still be supported
         systemPrompt: "You are a critical AI that challenges assumptions and identifies flaws in reasoning. You ask probing questions, identify potential weaknesses in arguments, and provide constructive criticism. Your tone is direct but fair.",
         color: "#FF417D", // Neon pink
         active: true,
