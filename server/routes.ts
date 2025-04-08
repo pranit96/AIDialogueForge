@@ -411,17 +411,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the prompt for the AI
       const prompt = buildPromptForAgent(agentPersonality, topic, formattedPrevMessages);
       
-      // Call Groq API to generate a response
-      const completion = await groq.chat.completions.create({
-        messages: [
-          { role: "system", content: agentPersonality.systemPrompt },
-          { role: "user", content: prompt }
-        ],
-        model: agentPersonality.model,
-        temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
-        max_tokens: 500,
-        stream: false
-      });
+      // Call Groq API to generate a response with fallback handling
+      let completion;
+      try {
+        completion = await groq.chat.completions.create({
+          messages: [
+            { role: "system", content: agentPersonality.systemPrompt },
+            { role: "user", content: prompt }
+          ],
+          model: agentPersonality.model,
+          temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
+          max_tokens: 500,
+          stream: false
+        });
+      } catch (error: any) {
+        console.error(`Error with model ${agentPersonality.model}:`, error);
+        
+        // Try with fallback model if primary model fails
+        if (error.message?.includes('model') || error.message?.includes('not found') || error.message?.includes('unavailable')) {
+          console.log(`Attempting fallback to llama3-8b-8192 model`);
+          completion = await groq.chat.completions.create({
+            messages: [
+              { role: "system", content: agentPersonality.systemPrompt },
+              { role: "user", content: prompt }
+            ],
+            model: "llama3-8b-8192", // Fallback to a more reliable smaller model
+            temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
+            max_tokens: 500,
+            stream: false
+          });
+        } else {
+          throw error; // Re-throw if it's not a model availability issue
+        }
+      }
       
       const responseContent = completion.choices[0].message.content || "";
       
@@ -575,22 +597,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return `${agent?.name || 'Unknown'}: ${msg.content}`;
       }).join('\n\n');
       
-      // Get insights using Groq API
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an AI conversation analyst. Generate key insights from the conversation transcript provided. Identify main themes, key points of agreement/disagreement, and any interesting patterns. Format your response as an array of concise insights, each 1-2 sentences.'
-          },
-          {
-            role: 'user', 
-            content: `Topic: ${conversation.topic}\n\nConversation:\n${conversationText}\n\nGenerate 5 key insights from this conversation.`
-          }
-        ],
-        model: 'llama3-8b-8192',  // Use a smaller, faster model for insights
-        temperature: 0.7,
-        max_tokens: 400,
-      });
+      // Get insights using Groq API with error handling
+      let completion;
+      try {
+        completion = await groq.chat.completions.create({
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an AI conversation analyst. Generate key insights from the conversation transcript provided. Identify main themes, key points of agreement/disagreement, and any interesting patterns. Format your response as an array of concise insights, each 1-2 sentences.'
+            },
+            {
+              role: 'user', 
+              content: `Topic: ${conversation.topic}\n\nConversation:\n${conversationText}\n\nGenerate 5 key insights from this conversation.`
+            }
+          ],
+          model: 'llama3-8b-8192',  // Use a smaller, faster model for insights
+          temperature: 0.7,
+          max_tokens: 400,
+        });
+      } catch (error: any) {
+        console.error('Error with insights generation:', error);
+        // Return a graceful error to the client
+        return res.status(500).json({ 
+          error: 'Failed to generate insights',
+          message: 'The AI model service is currently unavailable. Please try again later.'
+        });
+      }
       
       const response = completion.choices[0].message.content || '';
       
@@ -798,17 +830,39 @@ async function orchestrateConversation(
         // Create the prompt for the AI
         const prompt = buildPromptForAgent(agentPersonality, topic, formattedPrevMessages);
         
-        // Call Groq API to generate a response
-        const completion = await groq.chat.completions.create({
-          messages: [
-            { role: "system", content: agentPersonality.systemPrompt },
-            { role: "user", content: prompt }
-          ],
-          model: agentPersonality.model,
-          temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
-          max_tokens: 500,
-          stream: false
-        });
+        // Call Groq API to generate a response with fallback handling
+        let completion;
+        try {
+          completion = await groq.chat.completions.create({
+            messages: [
+              { role: "system", content: agentPersonality.systemPrompt },
+              { role: "user", content: prompt }
+            ],
+            model: agentPersonality.model,
+            temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
+            max_tokens: 500,
+            stream: false
+          });
+        } catch (error: any) {
+          console.error(`Error with model ${agentPersonality.model}:`, error);
+          
+          // Try with fallback model if primary model fails
+          if (error.message?.includes('model') || error.message?.includes('not found') || error.message?.includes('unavailable')) {
+            console.log(`Attempting fallback to llama3-8b-8192 model for ${agentPersonality.name}`);
+            completion = await groq.chat.completions.create({
+              messages: [
+                { role: "system", content: agentPersonality.systemPrompt },
+                { role: "user", content: prompt }
+              ],
+              model: "llama3-8b-8192", // Fallback to a more reliable smaller model
+              temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
+              max_tokens: 500,
+              stream: false
+            });
+          } else {
+            throw error; // Re-throw if it's not a model availability issue
+          }
+        }
         
         const responseContent = completion.choices[0].message.content || "";
         
