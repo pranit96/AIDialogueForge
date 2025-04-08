@@ -6,6 +6,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -41,6 +42,7 @@ export const conversations = pgTable("conversations", {
   startedAt: timestamp("started_at").notNull().defaultNow(),
   endedAt: timestamp("ended_at"),
   isActive: boolean("is_active").default(true),
+  userId: integer("user_id").references(() => users.id),
 });
 
 export const insertConversationSchema = createInsertSchema(conversations).omit({
@@ -48,6 +50,7 @@ export const insertConversationSchema = createInsertSchema(conversations).omit({
   startedAt: true,
   endedAt: true,
   isActive: true,
+  userId: true,
 });
 
 export type InsertConversation = z.infer<typeof insertConversationSchema>;

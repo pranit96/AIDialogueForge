@@ -6,9 +6,18 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import { neon } from "@neondatabase/serverless";
+
+// Create a PostgreSQL session store
+const PgSession = connectPgSimple(session);
 
 // Define the interface for all storage operations
 export interface IStorage {
+  // Session store for express-session
+  sessionStore: session.Store;
+  
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -21,9 +30,9 @@ export interface IStorage {
   updateAgentPersonality(id: number, personality: Partial<AgentPersonality>): Promise<AgentPersonality | undefined>;
   
   // Conversation operations
-  getConversations(): Promise<Conversation[]>;
+  getConversations(userId?: number): Promise<Conversation[]>;
   getConversation(id: number): Promise<Conversation | undefined>;
-  createConversation(conversation: InsertConversation): Promise<Conversation>;
+  createConversation(conversation: InsertConversation, userId?: number): Promise<Conversation>;
   endConversation(id: number): Promise<Conversation | undefined>;
   
   // Message operations
@@ -33,6 +42,18 @@ export interface IStorage {
 
 // Database implementation of the storage interface
 export class DatabaseStorage implements IStorage {
+  // Session store for express-session
+  sessionStore: session.Store;
+  
+  constructor() {
+    // Initialize session store with connect-pg-simple
+    this.sessionStore = new PgSession({
+      conString: process.env.DATABASE_URL || "",
+      tableName: 'session', // Default table name
+      createTableIfMissing: true
+    });
+  }
+  
   // User operations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -74,7 +95,14 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Conversation operations
-  async getConversations(): Promise<Conversation[]> {
+  async getConversations(userId?: number): Promise<Conversation[]> {
+    if (userId) {
+      return await db
+        .select()
+        .from(conversations)
+        .where(eq(conversations.userId, userId))
+        .orderBy(desc(conversations.startedAt));
+    }
     return await db.select().from(conversations).orderBy(desc(conversations.startedAt));
   }
   
@@ -83,8 +111,11 @@ export class DatabaseStorage implements IStorage {
     return conversation;
   }
   
-  async createConversation(conversation: InsertConversation): Promise<Conversation> {
-    const [newConversation] = await db.insert(conversations).values(conversation).returning();
+  async createConversation(conversation: InsertConversation, userId?: number): Promise<Conversation> {
+    const [newConversation] = await db
+      .insert(conversations)
+      .values({ ...conversation, userId })
+      .returning();
     return newConversation;
   }
   

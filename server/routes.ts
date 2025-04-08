@@ -18,14 +18,57 @@ const groq = new Groq({
 
 // WebSocket connection handling
 const setupWebSocketServer = (server: Server) => {
+  // Create WebSocket server with more permissive settings for Replit environment
   const wss = new WebSocketServer({ 
-    server,
-    // Allow connections from all origins
-    verifyClient: () => true,
+    noServer: true,
+    perMessageDeflate: {
+      zlibDeflateOptions: {
+        chunkSize: 1024,
+        memLevel: 7,
+        level: 3
+      },
+      zlibInflateOptions: {
+        chunkSize: 10 * 1024
+      },
+      clientNoContextTakeover: true,
+      serverNoContextTakeover: true,
+      serverMaxWindowBits: 10,
+      concurrencyLimit: 10,
+      threshold: 1024
+    }
+  });
+
+  server.on('upgrade', (request, socket, head) => {
+    console.log(`WebSocket upgrade requested from ${request.headers.host}`);
+    
+    // Handle unexpected socket closures
+    socket.on('error', (err) => {
+      console.error('WebSocket upgrade socket error:', err);
+    });
+    
+    try {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+      });
+    } catch (error) {
+      console.error('Error during WebSocket upgrade:', error);
+      socket.destroy();
+    }
   });
   
-  wss.on("connection", (ws) => {
+  wss.on("connection", (ws, request) => {
     console.log("New client connected");
+    
+    // Add ping interval to keep connection alive through proxies
+    const pingInterval = setInterval(() => {
+      if (ws.readyState === ws.OPEN) {
+        try {
+          ws.ping();
+        } catch (err) {
+          console.error("Ping error:", err);
+        }
+      }
+    }, 30000);
     
     // Send a welcome message to the client
     try {
@@ -47,8 +90,14 @@ const setupWebSocketServer = (server: Server) => {
     });
     
     ws.on("close", (code, reason) => {
-      console.log(`Client disconnected. Code: ${code}, Reason: ${reason.toString()}`);
+      console.log(`Client disconnected. Code: ${code}, Reason: ${reason ? reason.toString() : "none"}`);
+      clearInterval(pingInterval);
     });
+  });
+  
+  // Add error handler for the whole server
+  wss.on('error', (error) => {
+    console.error('WebSocket server error:', error);
   });
   
   return wss;
@@ -63,9 +112,15 @@ const broadcastMessage = (wss: WebSocketServer, type: string, data: any) => {
   });
 };
 
+// Import the auth setup
+import { setupAuth } from "./auth";
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   const wss = setupWebSocketServer(httpServer);
+  
+  // Set up authentication
+  setupAuth(app);
   
   // Create default agent personalities if they don't exist
   await initializeDefaultAgentPersonalities();
@@ -85,7 +140,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Conversations
   app.get("/api/conversations", async (req, res) => {
     try {
-      const conversations = await storage.getConversations();
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.user?.id;
+      const conversations = await storage.getConversations(userId);
       res.json(conversations);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch conversations" });
@@ -94,11 +154,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/conversations/:id", async (req, res) => {
     try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.user?.id;
       const id = parseInt(req.params.id);
       const conversation = await storage.getConversation(id);
       
       if (!conversation) {
         return res.status(404).json({ error: "Conversation not found" });
+      }
+      
+      // If the conversation has a userId, make sure it belongs to the current user
+      if (conversation.userId && conversation.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
       }
       
       res.json(conversation);
@@ -109,8 +179,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/conversations", async (req, res) => {
     try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.user?.id;
       const validatedData = insertConversationSchema.parse(req.body);
-      const conversation = await storage.createConversation(validatedData);
+      const conversation = await storage.createConversation(validatedData, userId);
       
       // Broadcast the new conversation to all clients
       broadcastMessage(wss, "NEW_CONVERSATION", conversation);
@@ -126,12 +201,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/conversations/:id/end", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      const conversation = await storage.endConversation(id);
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
       
-      if (!conversation) {
+      const userId = req.user?.id;
+      const id = parseInt(req.params.id);
+      
+      // Get conversation to check ownership
+      const conversationToEnd = await storage.getConversation(id);
+      if (!conversationToEnd) {
         return res.status(404).json({ error: "Conversation not found" });
       }
+      
+      // If the conversation has a userId, make sure it belongs to the current user
+      if (conversationToEnd.userId && conversationToEnd.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      const conversation = await storage.endConversation(id);
       
       // Broadcast the conversation end to all clients
       broadcastMessage(wss, "END_CONVERSATION", conversation);
@@ -145,7 +233,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Messages
   app.get("/api/conversations/:id/messages", async (req, res) => {
     try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.user?.id;
       const conversationId = parseInt(req.params.id);
+      
+      // Get conversation to check ownership
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ error: "Conversation not found" });
+      }
+      
+      // If the conversation has a userId, make sure it belongs to the current user
+      if (conversation.userId && conversation.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
       const messages = await storage.getMessagesForConversation(conversationId);
       res.json(messages);
     } catch (error) {
@@ -156,10 +261,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate a response from an agent using Groq
   app.post("/api/generate-response", async (req, res) => {
     try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.user?.id;
       const { conversationId, agentPersonalityId, topic, previousMessages } = req.body;
       
       if (!conversationId || !agentPersonalityId || !topic) {
         return res.status(400).json({ error: "Missing required parameters" });
+      }
+      
+      // Get the conversation to check ownership
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ error: "Conversation not found" });
+      }
+      
+      // If the conversation has a userId, make sure it belongs to the current user
+      if (conversation.userId && conversation.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
       }
       
       // Get the agent personality
@@ -223,12 +344,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Orchestrate conversation among multiple agents
   app.post("/api/conversations/orchestrate", async (req, res) => {
     try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.user?.id;
       const { conversationId, topic, agentPersonalityIds, turnCount = 3 } = req.body;
       
       if (!conversationId || !topic || !agentPersonalityIds || agentPersonalityIds.length < 2) {
         return res.status(400).json({ 
           error: "Invalid request. Need conversationId, topic, and at least 2 agent personality IDs." 
         });
+      }
+      
+      // Get conversation to check ownership
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ error: "Conversation not found" });
+      }
+      
+      // If the conversation has a userId, make sure it belongs to the current user
+      if (conversation.userId && conversation.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
       }
       
       // Start conversation orchestration in background
