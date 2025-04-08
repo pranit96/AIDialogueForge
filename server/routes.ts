@@ -117,6 +117,85 @@ const broadcastMessage = (wss: WebSocketServer, type: string, data: any) => {
   });
 };
 
+// Cache available Groq models to avoid frequent API calls
+let cachedGroqModels: any[] = [];
+let lastModelFetch = 0;
+const MODEL_CACHE_TTL = 1800000; // 30 minutes in milliseconds
+
+// Fetch available Groq models
+async function fetchGroqModels(): Promise<any[]> {
+  try {
+    // Return cached models if they're still fresh
+    if (cachedGroqModels.length > 0 && (Date.now() - lastModelFetch) < MODEL_CACHE_TTL) {
+      return cachedGroqModels;
+    }
+    
+    // Make API request to get available models
+    const response = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch models: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // Filter and format models
+    cachedGroqModels = data.data
+      .filter((model: any) => 
+        // Only include LLM models, exclude audio models
+        !model.id.includes('whisper') && 
+        !model.id.includes('distil-whisper'))
+      .map((model: any) => ({
+        id: model.id,
+        name: formatModelName(model.id),
+        contextWindow: model.context_window,
+        owner: model.owned_by
+      }));
+    
+    lastModelFetch = Date.now();
+    return cachedGroqModels;
+  } catch (error) {
+    console.error('Error fetching Groq models:', error);
+    // Return a minimal set of fallback models if fetch fails
+    return [
+      { id: 'llama3-8b-8192', name: 'Llama 3 8B', contextWindow: 8192, owner: 'Meta' },
+      { id: 'llama3-70b-8192', name: 'Llama 3 70B', contextWindow: 8192, owner: 'Meta' },
+      { id: 'gemma-7b-it', name: 'Gemma 7B', contextWindow: 8192, owner: 'Google' }
+    ];
+  }
+}
+
+// Format model names for display
+function formatModelName(modelId: string): string {
+  // Extract meaningful parts from model IDs
+  if (modelId.includes('llama3-') || modelId.includes('llama-3')) {
+    // Handle Llama 3 variants
+    if (modelId.includes('70b')) return 'Llama 3 70B';
+    if (modelId.includes('8b')) return 'Llama 3 8B';
+    if (modelId.includes('3b')) return 'Llama 3 3B';
+    if (modelId.includes('1b')) return 'Llama 3 1B';
+    if (modelId.includes('90b')) return 'Llama 3 90B';
+  } else if (modelId.includes('gemma')) {
+    // Handle Gemma variants
+    if (modelId.includes('7b')) return 'Gemma 7B';
+    if (modelId.includes('9b')) return 'Gemma 2 9B';
+  } else if (modelId.includes('mixtral')) {
+    return 'Mixtral 8x7B';
+  } else if (modelId.includes('llava')) {
+    return 'LLaVA Vision';
+  }
+  
+  // For unknown model formats, just capitalize and clean up the ID
+  return modelId
+    .split('-')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 // Import the auth setup
 import { setupAuth } from "./auth";
 
@@ -139,6 +218,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(personalities);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch agent personalities" });
+    }
+  });
+  
+  // Fetch available Groq models
+  app.get("/api/groq-models", async (req, res) => {
+    try {
+      const models = await fetchGroqModels();
+      res.json(models);
+    } catch (error) {
+      console.error("Error fetching Groq models:", error);
+      res.status(500).json({ error: "Failed to fetch Groq models" });
     }
   });
   

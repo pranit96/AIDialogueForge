@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { AgentPersonality } from '@/types';
@@ -63,8 +63,8 @@ const RESPONSE_STYLES = [
   { value: 'questioning', label: 'Questioning' },
 ];
 
-// Available models - updated to include only those currently supported by Groq (2025-04-08)
-const AVAILABLE_MODELS = [
+// Default models as fallback when API fails to fetch latest models
+const DEFAULT_MODELS = [
   { value: 'llama3-70b-8192', label: 'Llama 3 70B' },
   { value: 'llama3-8b-8192', label: 'Llama 3 8B' },
   { value: 'gemma-7b-it', label: 'Gemma 7B' },
@@ -131,6 +131,32 @@ export default function AgentCustomizationForm({ existingAgent, onCancel }: Agen
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('basic');
   const isEditing = !!existingAgent;
+  const [availableModels, setAvailableModels] = useState(DEFAULT_MODELS);
+  
+  // Fetch available models from Groq API
+  const { isLoading: isLoadingModels } = useQuery({
+    queryKey: ['/api/groq-models'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/groq-models');
+        if (!response.ok) {
+          throw new Error('Failed to fetch Groq models');
+        }
+        const data = await response.json();
+        // Format models for display
+        const formattedModels = data.map((model: any) => ({
+          value: model.id,
+          label: model.displayName || model.id
+        }));
+        setAvailableModels(formattedModels.length ? formattedModels : DEFAULT_MODELS);
+        return data;
+      } catch (error) {
+        console.error('Error fetching Groq models:', error);
+        return DEFAULT_MODELS;
+      }
+    },
+    retry: 1
+  });
   
   // Setup the form with default values
   const form = useForm<FormValues>({
@@ -305,11 +331,20 @@ export default function AgentCustomizationForm({ existingAgent, onCancel }: Agen
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent className="bg-deep-space border-cyber-mint">
-                            {AVAILABLE_MODELS.map(model => (
-                              <SelectItem key={model.value} value={model.value}>
-                                {model.label}
+                            {isLoadingModels ? (
+                              <SelectItem value="loading" disabled>
+                                <div className="flex items-center">
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Loading models...
+                                </div>
                               </SelectItem>
-                            ))}
+                            ) : (
+                              availableModels.map((model: {value: string, label: string}) => (
+                                <SelectItem key={model.value} value={model.value}>
+                                  {model.label}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                         <FormDescription>
