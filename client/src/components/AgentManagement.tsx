@@ -154,8 +154,9 @@ export default function AgentManagement() {
   // Format agent model name for display
   const formatModelName = (modelId: string) => {
     switch (modelId) {
+      // This model has been decommissioned, but kept for backward compatibility
       case 'mixtral-8x7b-32768':
-        return 'Mixtral 8x7B';
+        return 'Llama 3 8B (Fallback)';
       case 'llama3-70b-8192':
         return 'Llama 3 70B';
       case 'llama3-8b-8192':
