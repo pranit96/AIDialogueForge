@@ -10,6 +10,7 @@ import Settings from "@/pages/Settings";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
+import EnigmaNetworkViz from "@/components/NeuralNetworkViz";
 
 function Router() {
   return (
@@ -189,34 +190,22 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="relative min-h-screen overflow-hidden">
-          {/* Subtle background pattern */}
-          <div className="subtle-pattern"></div>
+        <div className="relative min-h-screen overflow-hidden bg-black">
+          {/* Full-screen Neural Network Background */}
+          <div className="fixed inset-0 pointer-events-none" style={{ zIndex: -10 }}>
+            <EnigmaNetworkViz 
+              className="w-full h-full" 
+              nodeCount={100} 
+              edgeCount={150}
+              animationSpeed={0.3}
+            />
+          </div>
           
-          {/* Dot grid background */}
-          <div className="dot-grid"></div>
-          
-          {/* Mysterious cosmic fog */}
-          <div className="cosmic-fog"></div>
-          
-          {/* Background gradient dots */}
-          {gradientDots}
-          
-          {/* Subtle gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-abyss opacity-10 -z-5 pointer-events-none"></div>
-          
-          {/* Enhanced mysterious vignette effect */}
-          <div className="absolute inset-0 -z-5 pointer-events-none" 
+          {/* Deep space vignette effect */}
+          <div className="fixed inset-0 pointer-events-none" 
             style={{
-              boxShadow: "inset 0 0 250px 100px rgba(14, 14, 16, 0.5), inset 0 0 150px 50px rgba(51, 14, 68, 0.2)"
-            }}
-          ></div>
-          
-          {/* Ethereal cosmic background with animated gradients */}
-          <div className="absolute inset-0 -z-10 opacity-20 overflow-hidden" 
-            style={{
-              background: "radial-gradient(circle at 30% 20%, rgba(109, 40, 217, 0.25) 0%, transparent 45%), radial-gradient(circle at 70% 80%, rgba(228, 84, 168, 0.2) 0%, transparent 50%), radial-gradient(ellipse at 40% 60%, rgba(61, 145, 255, 0.15) 0%, transparent 70%)",
-              animation: "cosmic-shift 25s infinite ease-in-out"
+              boxShadow: "inset 0 0 250px 100px rgba(0, 0, 0, 0.7), inset 0 0 150px 50px rgba(0, 0, 0, 0.5)",
+              zIndex: -5
             }}
           ></div>
           

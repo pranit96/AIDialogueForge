@@ -2,5 +2,6 @@
   "variant": "vibrant",
   "primary": "#7B2BFE",
   "appearance": "dark",
-  "radius": 0.5
+  "radius": 0.5,
+  "background": "#000000"
 }

@@ -8,8 +8,8 @@
   }
 
   body {
-    @apply font-sans antialiased bg-abyss text-whisper;
-    background: radial-gradient(ellipse at top, #12101F 0%, #0A0A14 100%);
+    @apply font-sans antialiased text-whisper;
+    background: #000000;
     overflow-x: hidden;
     min-height: 100vh;
     position: relative;
@@ -614,8 +614,8 @@
 /* Enhanced neural network visualization */
 .nexus-network {
   @apply relative w-full h-full min-h-[400px] opacity-90;
-  z-index: 5;
-  background: radial-gradient(circle at 50% 50%, rgba(30, 20, 50, 0.5) 0%, rgba(15, 10, 25, 0.1) 70%);
+  z-index: 0;
+  background: transparent;
   overflow: hidden;
 }
 
