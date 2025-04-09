@@ -251,30 +251,35 @@ export default function Settings() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header */}
-      <header className="w-full py-4 px-6 glass-panel z-10">
+    <div className="flex flex-col min-h-screen bg-abyss bg-opacity-30">
+      {/* Ethereal background effects */}
+      <div className="cosmic-fog"></div>
+      
+      {/* Header with cosmic glow */}
+      <header className="w-full py-4 px-6 glass-panel z-10 border-b border-arcane border-opacity-10">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/query")}
-              className="mr-2"
+              onClick={() => navigate("/knowledge")}
+              className="mr-2 text-whisper hover:text-arcane"
             >
               <Home className="h-5 w-5" />
             </Button>
-            <h1 className="heading-3 gradient-text-cosmic">
+            <h1 className="heading-3 gradient-text-mystic">
               Neural Configuration
             </h1>
           </div>
           
           <Button
             onClick={handleAddClick}
-            className="primary-button"
+            className="glow-button relative overflow-hidden group"
           >
+            <div className="absolute inset-0 bg-gradient-to-r from-arcane/20 via-transparent to-arcane/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <Plus className="h-4 w-4 mr-2" />
-            Add Neural Entity
+            <span>Create Neural Entity</span>
+            <div className="absolute bottom-0 left-0 h-[1px] w-full bg-gradient-to-r from-transparent via-whisper/40 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700"></div>
           </Button>
         </div>
       </header>

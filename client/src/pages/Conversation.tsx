@@ -151,9 +151,9 @@ export default function ConversationPage() {
     }
   };
 
-  // Handle go to query screen
-  const goToQuery = () => {
-    navigate("/query");
+  // Handle go to knowledge query screen
+  const goToKnowledge = () => {
+    navigate("/knowledge");
   };
 
   // Handle go to settings
@@ -179,7 +179,7 @@ export default function ConversationPage() {
         <p className="body-base text-whisper mb-8">
           Connection to the Neural Nexus failed. Please try again.
         </p>
-        <Button onClick={goToQuery} className="primary-button">
+        <Button onClick={goToKnowledge} className="primary-button">
           Return to Neural Gateway
         </Button>
       </div>
@@ -194,7 +194,7 @@ export default function ConversationPage() {
         <p className="body-base text-whisper mb-8">
           The requested neural dialogue does not exist or has been terminated.
         </p>
-        <Button onClick={goToQuery} className="primary-button">
+        <Button onClick={goToKnowledge} className="primary-button">
           Return to Neural Gateway
         </Button>
       </div>
@@ -210,7 +210,7 @@ export default function ConversationPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={goToQuery}
+              onClick={goToKnowledge}
               className="mr-2"
             >
               <Home className="h-5 w-5" />

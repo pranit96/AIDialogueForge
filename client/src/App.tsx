@@ -15,9 +15,10 @@ function Router() {
   return (
     <Switch>
       <Route path="/">
-        <Redirect to="/query" />
+        <Redirect to="/knowledge" />
       </Route>
-      <ProtectedRoute path="/query" component={KnowledgeQuery} />
+      {/* Main flow: Login → Knowledge Query → Conversation → Settings */}
+      <ProtectedRoute path="/knowledge" component={KnowledgeQuery} />
       <ProtectedRoute path="/conversation/:id" component={Conversation} />
       <ProtectedRoute path="/settings" component={Settings} />
       <Route path="/auth" component={AuthPage} />

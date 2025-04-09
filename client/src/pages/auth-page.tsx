@@ -68,9 +68,9 @@ export default function AuthPage() {
     registerMutation.mutate(values);
   };
 
-  // If user is logged in, redirect to query page
+  // If user is logged in, redirect to knowledge page
   if (user) {
-    return <Redirect to="/query" />;
+    return <Redirect to="/knowledge" />;
   }
 
   return (
