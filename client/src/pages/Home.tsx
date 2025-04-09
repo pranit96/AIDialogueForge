@@ -241,33 +241,33 @@ export default function Home() {
       {/* Header */}
       <Header />
       
-      {/* Neural Background Animation */}
-      <div className="fixed inset-0 -z-10 opacity-20 pointer-events-none">
-        <NeuralNetworkViz nodeCount={30} edgeCount={40} animationSpeed={0.3} />
+      {/* Enigmatic Neural Background Animation */}
+      <div className="fixed inset-0 -z-10 opacity-30 pointer-events-none">
+        <NeuralNetworkViz nodeCount={35} edgeCount={45} animationSpeed={0.4} />
       </div>
       
       {/* Mode switching tabs */}
-      <div className="mb-6">
-        <div className="inline-flex glass rounded-lg border border-cyber-mint p-1 mb-3">
+      <div className="mb-8">
+        <div className="arcane-tabs mx-auto flex justify-center">
           <button
-            className={`px-4 py-2 rounded font-cyber text-sm ${
+            className={`arcane-tab ${
               activeMode === 'conversation'
-                ? 'bg-cyber-mint text-deep-space font-cyber'
-                : 'text-cyber-mint'
+                ? 'arcane-tab-active'
+                : 'arcane-tab-inactive'
             }`}
             onClick={() => setActiveMode('conversation')}
           >
-            NEURAL MATRIX
+            ENIGMATIC MATRIX
           </button>
           <button
-            className={`px-4 py-2 rounded font-cyber text-sm ${
+            className={`arcane-tab ${
               activeMode === 'agents'
-                ? 'bg-cyber-mint text-deep-space font-cyber'
-                : 'text-cyber-mint'
+                ? 'arcane-tab-active'
+                : 'arcane-tab-inactive'
             }`}
             onClick={() => setActiveMode('agents')}
           >
-            AGENT HUB
+            AGENT SANCTUM
           </button>
         </div>
       </div>
@@ -291,45 +291,76 @@ export default function Home() {
             />
             
             {/* Connection visualization - small on mobile, larger on desktop */}
-            <div className="mt-6 h-[200px] lg:h-[350px] glass rounded-lg p-4 relative overflow-hidden border border-deep-space hidden lg:block">
-              <h3 className="font-cyber text-sm text-cyber-mint mb-2 uppercase tracking-wider">Neural Activity</h3>
-              <NeuralNetworkViz className="opacity-70" nodeCount={15} edgeCount={25} animationSpeed={0.5} />
+            <div className="mt-6 h-[200px] lg:h-[350px] enigma-container p-4 relative overflow-hidden hidden lg:block">
+              <h3 className="font-enigmatic text-sm text-arcane mb-2 uppercase tracking-widest">Enigmatic Nexus</h3>
+              <NeuralNetworkViz className="opacity-80" nodeCount={18} edgeCount={28} animationSpeed={0.5} />
             </div>
           </div>
           
           {/* Main Content */}
           <div className="lg:col-span-9 order-1 lg:order-2">
             {/* Topic Input */}
-            <div className="glass rounded-lg p-5 mb-6 border border-deep-space neon-border animate-pulse-glow">
-              <h2 className="font-cyber text-xl text-cyber-mint mb-4 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-5 h-5 mr-2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+            <div className="enigma-container p-6 mb-6 animate-mystic-flow">
+              <h2 className="font-enigmatic text-xl mb-4 flex items-center justify-center group">
+                <span className="w-8 h-px bg-arcane opacity-30 mr-3"></span>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  strokeWidth="1.5" 
+                  stroke="currentColor" 
+                  className="w-5 h-5 mr-2 text-arcane"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
                 </svg>
-                <span className="glitch-text">DISCUSSION TOPIC</span>
+                <span className="animate-subtle-glitch text-arcane tracking-widest">COMMUNION INQUIRY</span>
+                <span className="w-8 h-px bg-arcane opacity-30 ml-3"></span>
               </h2>
+              
+              {/* Mysterious border element */}
+              <div className="w-16 h-1 mx-auto bg-gradient-to-r from-transparent via-arcane to-transparent mb-5 opacity-40"></div>
               
               <div className="relative">
                 <input 
                   type="text" 
-                  placeholder="Enter a topic for AI agents to discuss..." 
-                  className="w-full bg-deep-space bg-opacity-50 text-ghost-blue py-3 px-4 rounded-md border border-cyber-mint focus:outline-none focus:ring-2 focus:ring-cyber-mint focus:border-transparent"
+                  placeholder="Enter a metaphysical query for the entities..." 
+                  className="arcane-input"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   disabled={isOrchestrating}
                 />
                 
-                <button 
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-cyber-mint text-void-black py-1.5 px-4 rounded font-cyber hover:bg-opacity-80 transition-all"
-                  onClick={handleStartConversation}
-                  disabled={isOrchestrating || !topic || selectedAgents.length < 2}
-                >
+                {/* Button wrapper for positioning */}
+                <div className="mt-4 flex justify-end">
                   {isOrchestrating ? (
-                    <span className="flex items-center">
-                      <span className="animate-pulse mr-1">●</span> ACTIVE
-                    </span>
-                  ) : 'INITIATE'}
-                </button>
+                    <div className="arcane-button opacity-90 cursor-not-allowed">
+                      <div className="arcane-spinner mr-2"></div>
+                      <span>CONJURING</span>
+                    </div>
+                  ) : (
+                    <button 
+                      className={`${selectedAgents.length < 2 || !topic ? 'opacity-50 cursor-not-allowed' : ''} ember-button`}
+                      onClick={handleStartConversation}
+                      disabled={isOrchestrating || !topic || selectedAgents.length < 2}
+                    >
+                      INITIATE COMMUNION
+                    </button>
+                  )}
+                </div>
               </div>
+              
+              {/* Subtle hint text for agent selection requirement */}
+              {selectedAgents.length < 2 && (
+                <p className="text-xs text-rune mt-3 italic text-center">
+                  Select at least two arcane entities to begin communion
+                </p>
+              )}
+              
+              {/* Decorative corner elements */}
+              <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-arcane border-opacity-30"></div>
+              <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-arcane border-opacity-30"></div>
+              <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-arcane border-opacity-30"></div>
+              <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-arcane border-opacity-30"></div>
             </div>
             
             {/* Conversation Display */}
