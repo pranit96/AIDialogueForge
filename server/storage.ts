@@ -13,7 +13,7 @@ import { neon } from "@neondatabase/serverless";
 // Create a PostgreSQL session store
 const PgSession = connectPgSimple(session);
 
-// Define the interface for all storage operations
+// Define the enhanced interface for all storage operations
 export interface IStorage {
   // Session store for express-session
   sessionStore: session.Store;
@@ -30,15 +30,24 @@ export interface IStorage {
   updateAgentPersonality(id: number, personality: Partial<AgentPersonality>): Promise<AgentPersonality | undefined>;
   deleteAgentPersonality(id: number): Promise<boolean>;
   
-  // Conversation operations
+  // Enhanced conversation operations
   getConversations(userId?: number): Promise<Conversation[]>;
   getConversation(id: number): Promise<Conversation | undefined>;
+  getConversationBySessionId(sessionId: string): Promise<Conversation | undefined>;
   createConversation(conversation: InsertConversation, userId?: number): Promise<Conversation>;
   endConversation(id: number): Promise<Conversation | undefined>;
+  updateConversationActivity(id: number): Promise<Conversation | undefined>;
+  updateConversationStatus(id: number, status: string): Promise<Conversation | undefined>;
+  updateConversationTurn(id: number): Promise<Conversation | undefined>;
   
-  // Message operations
+  // Enhanced message operations
   getMessagesForConversation(conversationId: number): Promise<Message[]>;
+  getMessagesByType(conversationId: number, messageType: string): Promise<Message[]>;
+  getMessagesByAgentId(conversationId: number, agentPersonalityId: number): Promise<Message[]>;
+  getMessage(id: number): Promise<Message | undefined>;
   createMessage(message: InsertMessage): Promise<Message>;
+  updateMessage(id: number, updates: Partial<Message>): Promise<Message | undefined>;
+  getLatestMessageForAgent(conversationId: number, agentPersonalityId: number): Promise<Message | undefined>;
 }
 
 // Database implementation of the storage interface
@@ -108,7 +117,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
-  // Conversation operations
+  // Conversation operations with enhanced session management
   async getConversations(userId?: number): Promise<Conversation[]> {
     if (userId) {
       return await db
@@ -125,12 +134,45 @@ export class DatabaseStorage implements IStorage {
     return conversation;
   }
   
+  async getConversationBySessionId(sessionId: string): Promise<Conversation | undefined> {
+    const [conversation] = await db.select().from(conversations).where(eq(conversations.sessionId, sessionId));
+    return conversation;
+  }
+  
   async createConversation(conversation: InsertConversation, userId?: number): Promise<Conversation> {
     const [newConversation] = await db
       .insert(conversations)
-      .values({ ...conversation, userId })
+      .values({ 
+        ...conversation, 
+        userId,
+        lastActivity: new Date(), 
+        status: 'active'
+      })
       .returning();
     return newConversation;
+  }
+  
+  async updateConversationActivity(id: number): Promise<Conversation | undefined> {
+    const [updatedConversation] = await db
+      .update(conversations)
+      .set({ 
+        lastActivity: new Date()
+      })
+      .where(eq(conversations.id, id))
+      .returning();
+    return updatedConversation;
+  }
+  
+  async updateConversationStatus(id: number, status: string): Promise<Conversation | undefined> {
+    const [updatedConversation] = await db
+      .update(conversations)
+      .set({ 
+        status,
+        lastActivity: new Date()
+      })
+      .where(eq(conversations.id, id))
+      .returning();
+    return updatedConversation;
   }
   
   async endConversation(id: number): Promise<Conversation | undefined> {
@@ -138,14 +180,33 @@ export class DatabaseStorage implements IStorage {
       .update(conversations)
       .set({ 
         endedAt: new Date(),
-        isActive: false 
+        isActive: false,
+        status: 'completed',
+        lastActivity: new Date()
       })
       .where(eq(conversations.id, id))
       .returning();
     return updatedConversation;
   }
   
-  // Message operations
+  async updateConversationTurn(id: number): Promise<Conversation | undefined> {
+    // First get the current conversation to access the currentTurn value
+    const currentConversation = await this.getConversation(id);
+    if (!currentConversation) return undefined;
+    
+    // Then update with the incremented value
+    const [updatedConversation] = await db
+      .update(conversations)
+      .set({ 
+        currentTurn: (currentConversation.currentTurn || 0) + 1,
+        lastActivity: new Date()
+      })
+      .where(eq(conversations.id, id))
+      .returning();
+    return updatedConversation;
+  }
+  
+  // Enhanced message operations
   async getMessagesForConversation(conversationId: number): Promise<Message[]> {
     return await db
       .select()
@@ -154,9 +215,82 @@ export class DatabaseStorage implements IStorage {
       .orderBy(messages.timestamp);
   }
   
+  async getMessagesByType(conversationId: number, messageType: string): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(
+        and(
+          eq(messages.conversationId, conversationId),
+          eq(messages.messageType, messageType)
+        )
+      )
+      .orderBy(messages.timestamp);
+  }
+  
+  async getMessagesByAgentId(conversationId: number, agentPersonalityId: number): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(
+        and(
+          eq(messages.conversationId, conversationId),
+          eq(messages.agentPersonalityId, agentPersonalityId)
+        )
+      )
+      .orderBy(messages.timestamp);
+  }
+  
+  async getMessage(id: number): Promise<Message | undefined> {
+    const [message] = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.id, id));
+    return message;
+  }
+  
   async createMessage(message: InsertMessage): Promise<Message> {
-    const [newMessage] = await db.insert(messages).values(message).returning();
+    const [newMessage] = await db.insert(messages).values({
+      ...message,
+      // Set defaults for tracking fields if not provided
+      processTime: message.processTime || 0,
+      tokenCount: message.tokenCount || 0
+    }).returning();
+    
+    // Update the conversation's last activity timestamp
+    if (newMessage.conversationId) {
+      await this.updateConversationActivity(newMessage.conversationId);
+      await this.updateConversationTurn(newMessage.conversationId);
+    }
+    
     return newMessage;
+  }
+  
+  async updateMessage(id: number, updates: Partial<Message>): Promise<Message | undefined> {
+    const [updatedMessage] = await db
+      .update(messages)
+      .set({ 
+        ...updates,
+        isEdited: true 
+      })
+      .where(eq(messages.id, id))
+      .returning();
+    return updatedMessage;
+  }
+  
+  async getLatestMessageForAgent(conversationId: number, agentPersonalityId: number): Promise<Message | undefined> {
+    const [message] = await db
+      .select()
+      .from(messages)
+      .where(
+        and(
+          eq(messages.conversationId, conversationId),
+          eq(messages.agentPersonalityId, agentPersonalityId)
+        )
+      )
+      .orderBy(desc(messages.timestamp))
+      .limit(1);
+    return message;
   }
 }
 

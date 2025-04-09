@@ -1,126 +1,202 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Zap, Maximize2, Minimize2, Square, Sparkles, FilmIcon, Gauge } from 'lucide-react';
 
 interface SystemControlsProps {
   isOrchestrating: boolean;
   onForceStop: () => void;
+  onToggleFullscreen?: () => void;
+  isFullscreen?: boolean;
 }
 
-export default function SystemControls({ isOrchestrating, onForceStop }: SystemControlsProps) {
-  const [conversationSpeed, setConversationSpeed] = useState(50);
+export default function SystemControls({ 
+  isOrchestrating, 
+  onForceStop, 
+  onToggleFullscreen, 
+  isFullscreen = false 
+}: SystemControlsProps) {
+  const [conversationSpeed, setConversationSpeed] = useState(70);
   const [verbosityLevel, setVerbosityLevel] = useState(50);
-  const [creativityLevel, setCreativityLevel] = useState<'LOW' | 'MID' | 'HIGH'>('MID');
+  const [creativityLevel, setCreativityLevel] = useState<'LOW' | 'MID' | 'HIGH'>('HIGH');
+  const [systemStatusPulse, setSystemStatusPulse] = useState(false);
   
-  // Note: These controls are mostly for UI demonstration as they don't actually
-  // affect the conversation in the current implementation
+  // Pulse the system status indicator when orchestrating
+  if (isOrchestrating && !systemStatusPulse) {
+    setSystemStatusPulse(true);
+  } else if (!isOrchestrating && systemStatusPulse) {
+    setSystemStatusPulse(false);
+  }
   
   const handleForceStop = () => {
     // Add visual feedback when stop is clicked
     const button = document.getElementById('force-stop');
     if (button) {
-      button.classList.add('bg-neon-pink');
-      button.classList.add('text-void-black');
+      button.classList.add('bg-ember');
+      button.classList.add('text-abyss');
       
       setTimeout(() => {
-        button.classList.remove('bg-neon-pink');
-        button.classList.remove('text-void-black');
+        button.classList.remove('bg-ember');
+        button.classList.remove('text-abyss');
         
         // Call the actual stop function
         onForceStop();
-      }, 500);
+      }, 300);
     } else {
       onForceStop();
     }
   };
   
   return (
-    <div className="glass rounded-lg p-5 mb-6 border border-deep-space">
-      <h2 className="font-cyber text-xl text-cyber-mint mb-4 flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-5 h-5 mr-2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        SYSTEM CONTROLS
+    <div className="enigma-container p-5 mb-6 relative overflow-hidden group">
+      {/* Status indicator - pulsing when active */}
+      <div className={`absolute top-3 right-3 flex items-center ${systemStatusPulse ? 'animate-pulse' : ''}`}>
+        <div className={`w-2 h-2 rounded-full mr-1.5 ${isOrchestrating ? 'bg-ember' : 'bg-arcane'}`}></div>
+        <span className="text-xs font-enigmatic text-whisper">
+          {isOrchestrating ? 'ACTIVE' : 'IDLE'}
+        </span>
+      </div>
+      
+      <h2 className="font-enigmatic text-sm text-arcane mb-6 uppercase tracking-widest flex items-center">
+        <Zap className="w-4 h-4 mr-2 text-arcane" />
+        Neural Convergence Controls
       </h2>
       
-      {/* Force stop button */}
-      <motion.button 
-        id="force-stop" 
-        className="w-full mb-4 py-3 px-4 rounded bg-void-black border border-neon-pink text-neon-pink hover:bg-neon-pink hover:text-void-black transition-all duration-300 flex justify-center items-center font-cyber"
-        onClick={handleForceStop}
-        disabled={!isOrchestrating}
-        whileTap={{ scale: 0.95 }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-5 h-5 mr-2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z" />
-        </svg>
-        FORCE STOP
-      </motion.button>
+      {/* Control buttons row */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        {/* Force stop button */}
+        <motion.button 
+          id="force-stop" 
+          className="py-2.5 px-3 rounded-md bg-opacity-80 border border-ember border-opacity-40 text-ember hover:bg-ember hover:bg-opacity-20 transition-all duration-300 flex justify-center items-center font-enigmatic text-xs tracking-wider group"
+          onClick={handleForceStop}
+          disabled={!isOrchestrating}
+          whileTap={{ scale: 0.95 }}
+          initial={{ opacity: 0.8 }}
+          animate={{ opacity: isOrchestrating ? 1 : 0.6 }}
+        >
+          <Square className="w-3.5 h-3.5 mr-2 group-hover:animate-pulse" />
+          TERMINATE
+        </motion.button>
+        
+        {/* Fullscreen toggle button */}
+        {onToggleFullscreen && (
+          <motion.button 
+            className="py-2.5 px-3 rounded-md bg-opacity-80 border border-arcane border-opacity-40 text-arcane hover:bg-arcane hover:bg-opacity-20 transition-all duration-300 flex justify-center items-center font-enigmatic text-xs tracking-wider group"
+            onClick={onToggleFullscreen}
+            whileTap={{ scale: 0.95 }}
+          >
+            {isFullscreen ? (
+              <>
+                <Minimize2 className="w-3.5 h-3.5 mr-2 group-hover:animate-pulse" />
+                COLLAPSE
+              </>
+            ) : (
+              <>
+                <Maximize2 className="w-3.5 h-3.5 mr-2 group-hover:animate-pulse" />
+                EXPAND
+              </>
+            )}
+          </motion.button>
+        )}
+      </div>
       
-      {/* Controls */}
-      <div className="space-y-3">
+      {/* Advanced Controls */}
+      <div className="space-y-5 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+        {/* Conversation Speed */}
         <div>
-          <label className="block text-ghost-blue text-sm mb-1">Conversation Speed</label>
+          <div className="flex justify-between items-center mb-1.5">
+            <label className="block text-whisper text-xs font-enigmatic flex items-center">
+              <Gauge className="w-3 h-3 mr-1.5 text-arcane" />
+              NEURAL TEMPO
+            </label>
+            <span className="text-xs text-arcane font-medium">{conversationSpeed}%</span>
+          </div>
+          <div className="h-1 w-full bg-abyss rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-arcane to-ember rounded-full transition-all duration-300"
+              style={{ width: `${conversationSpeed}%` }}
+            ></div>
+          </div>
           <input 
             type="range" 
-            className="w-full h-2 bg-deep-space rounded-lg appearance-none cursor-pointer accent-cyber-mint"
+            className="w-full h-1 appearance-none cursor-pointer opacity-0 -mt-1"
             value={conversationSpeed}
             onChange={(e) => setConversationSpeed(parseInt(e.target.value))}
-            min="1"
+            min="30"
             max="100"
           />
         </div>
         
+        {/* Verbosity Level */}
         <div>
-          <label className="block text-ghost-blue text-sm mb-1">Verbosity Level</label>
+          <div className="flex justify-between items-center mb-1.5">
+            <label className="block text-whisper text-xs font-enigmatic flex items-center">
+              <FilmIcon className="w-3 h-3 mr-1.5 text-arcane" />
+              RESPONSE DEPTH
+            </label>
+            <span className="text-xs text-arcane font-medium">{verbosityLevel}%</span>
+          </div>
+          <div className="h-1 w-full bg-abyss rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-arcane to-ember rounded-full transition-all duration-300"
+              style={{ width: `${verbosityLevel}%` }}
+            ></div>
+          </div>
           <input 
             type="range" 
-            className="w-full h-2 bg-deep-space rounded-lg appearance-none cursor-pointer accent-cyber-mint"
+            className="w-full h-1 appearance-none cursor-pointer opacity-0 -mt-1"
             value={verbosityLevel}
             onChange={(e) => setVerbosityLevel(parseInt(e.target.value))}
-            min="1"
+            min="30"
             max="100"
           />
         </div>
         
+        {/* Response Creativity */}
         <div>
-          <label className="block text-ghost-blue text-sm mb-1">Response Creativity</label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="flex justify-between items-center mb-1.5">
+            <label className="block text-whisper text-xs font-enigmatic flex items-center">
+              <Sparkles className="w-3 h-3 mr-1.5 text-arcane" />
+              REALITY DIFFUSION
+            </label>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
             <button 
-              className={`py-1 px-2 rounded text-xs ${
+              className={`py-1 px-2 rounded-sm text-xs font-enigmatic tracking-wider transition-all duration-300 ${
                 creativityLevel === 'LOW' 
-                  ? 'bg-cyber-mint text-void-black' 
-                  : 'bg-deep-space border border-cyber-mint text-cyber-mint'
+                  ? 'bg-arcane bg-opacity-30 text-whisper border border-arcane border-opacity-40' 
+                  : 'bg-abyss bg-opacity-50 text-whisper text-opacity-60 border border-arcane border-opacity-20 hover:border-opacity-30'
               }`}
               onClick={() => setCreativityLevel('LOW')}
             >
-              LOW
+              BOUND
             </button>
             <button 
-              className={`py-1 px-2 rounded text-xs ${
+              className={`py-1 px-2 rounded-sm text-xs font-enigmatic tracking-wider transition-all duration-300 ${
                 creativityLevel === 'MID' 
-                  ? 'bg-cyber-mint text-void-black' 
-                  : 'bg-deep-space border border-cyber-mint text-cyber-mint'
+                  ? 'bg-arcane bg-opacity-30 text-whisper border border-arcane border-opacity-40' 
+                  : 'bg-abyss bg-opacity-50 text-whisper text-opacity-60 border border-arcane border-opacity-20 hover:border-opacity-30'
               }`}
               onClick={() => setCreativityLevel('MID')}
             >
-              MID
+              FLUID
             </button>
             <button 
-              className={`py-1 px-2 rounded text-xs ${
+              className={`py-1 px-2 rounded-sm text-xs font-enigmatic tracking-wider transition-all duration-300 ${
                 creativityLevel === 'HIGH' 
-                  ? 'bg-cyber-mint text-void-black' 
-                  : 'bg-deep-space border border-cyber-mint text-cyber-mint'
+                  ? 'bg-arcane bg-opacity-30 text-whisper border border-arcane border-opacity-40' 
+                  : 'bg-abyss bg-opacity-50 text-whisper text-opacity-60 border border-arcane border-opacity-20 hover:border-opacity-30'
               }`}
               onClick={() => setCreativityLevel('HIGH')}
             >
-              HIGH
+              UNBOUND
             </button>
           </div>
         </div>
       </div>
+      
+      {/* Ambient decoration */}
+      <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-arcane to-transparent opacity-20"></div>
+      <div className="absolute bottom-0 right-0 w-full h-0.5 bg-gradient-to-r from-arcane via-transparent to-arcane opacity-20"></div>
     </div>
   );
 }

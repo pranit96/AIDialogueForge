@@ -7,14 +7,18 @@ export interface AgentPersonality {
   systemPrompt: string;
   color: string;
   active: boolean;
+  archetype: string; // Personality archetype (sage, explorer, etc.)
+  title?: string;     // Title or role descriptor
   avatar?: string;
   voiceType?: string;
   personalityTraits?: string[];
   knowledgeDomains?: string[];
   responseStyle?: string;
   temperature?: string;
+  speechPattern?: string;
   userId?: number;
   isPublic?: boolean;
+  isDefault?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -23,9 +27,21 @@ export interface AgentPersonality {
 export interface Conversation {
   id: number;
   topic: string;
+  summary?: string;            // AI-generated summary
   startedAt: string;
   endedAt: string | null;
   isActive: boolean;
+  sessionId: string;           // Unique identifier for conversation session
+  lastActivity?: string;       // Timestamp of the last interaction
+  status?: string;             // active, paused, completed, archived
+  maxTurns?: number;           // Maximum number of turns
+  currentTurn?: number;        // Current turn number
+  visibility?: string;         // private, public, shared
+  conversationMode?: string;   // standard, debate, brainstorm, etc.
+  conversationSettings?: any;  // Additional configuration parameters
+  participatingAgents?: number[]; // Array of agent IDs in the conversation
+  tags?: string[];             // User-defined or auto-generated tags
+  category?: string;           // General category
 }
 
 // Message types
@@ -34,8 +50,20 @@ export interface Message {
   conversationId: number;
   agentPersonalityId: number;
   content: string;
+  richContent?: any;            // Enhanced content (code, formulas, etc.)
+  messageType?: string;         // standard, question, response, summary, system
+  emotionalTone?: string;       // Detected emotional tone
+  replyToMessageId?: number;    // For threaded conversations
+  mentionedAgentIds?: number[]; // References to other agents
   timestamp: string;
+  processTime?: number;         // Time taken to generate in ms
+  tokenCount?: number;          // Number of tokens used
+  model?: string;               // Model used to generate this message
+  temperature?: string;         // Temperature used for this message
+  thinking?: string;            // Chain-of-thought reasoning
   metadata?: any;
+  isEdited?: boolean;
+  reactions?: any;
   // Additional client-side properties
   agentName?: string;
   agentColor?: string;

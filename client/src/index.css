@@ -132,6 +132,25 @@
     @apply relative overflow-hidden;
     clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
   }
+  
+  /* Custom scrollbar for the futuristic look */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-abyss bg-opacity-20 rounded;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-arcane bg-opacity-40 rounded;
+    border-radius: 4px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-arcane bg-opacity-60;
+  }
 
   /* Loading spinner effect */
   .arcane-spinner {
@@ -201,6 +220,17 @@
   .glitch-text {
     position: relative;
     animation: subtle-glitch 5s infinite;
+  }
+  
+  /* Subtle pulsing glow for important text */
+  .pulse-text {
+    text-shadow: 0 0 2px currentColor;
+    animation: pulse-text 4s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-text {
+    0%, 100% { text-shadow: 0 0 2px currentColor; }
+    50% { text-shadow: 0 0 8px currentColor; }
   }
 
   /* Data stream effect */
