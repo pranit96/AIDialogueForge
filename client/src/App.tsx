@@ -80,28 +80,27 @@ function App() {
     };
   }, []);
 
-  // Create floating symbols that appear randomly
-  const floatingSymbols = Array.from({ length: 12 }).map((_, i) => {
+  // Create subtle gradient dots for background
+  const gradientDots = Array.from({ length: 20 }).map((_, i) => {
     const randomX = Math.floor(Math.random() * 100);
     const randomY = Math.floor(Math.random() * 100);
-    const randomSize = Math.floor(Math.random() * 10) + 10;
-    const randomDelay = Math.floor(Math.random() * 5);
-    const symbol = ['◆', '◇', '○', '◎', '△', '▲', '□', '▣', '✧', '✦', '⟡', '⟠'][i % 12];
+    const randomSize = Math.floor(Math.random() * 4) + 2;
+    const randomOpacity = 0.03 + (Math.random() * 0.05);
     
     return (
       <div 
         key={i}
-        className="floating-symbol text-arcane"
+        className="absolute rounded-full"
         style={{
           left: `${randomX}%`,
           top: `${randomY}%`,
-          fontSize: `${randomSize}px`,
-          animationDelay: `${randomDelay}s`,
-          opacity: 0.1 + (Math.random() * 0.2)
+          width: `${randomSize}px`,
+          height: `${randomSize}px`,
+          background: i % 2 === 0 ? 'rgba(109, 40, 217, 0.3)' : 'rgba(228, 84, 168, 0.3)',
+          filter: 'blur(1px)',
+          opacity: randomOpacity
         }}
-      >
-        {symbol}
-      </div>
+      />
     );
   });
 
@@ -109,29 +108,29 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <div className="relative min-h-screen overflow-hidden">
-          {/* Enigmatic background pattern */}
-          <div className="enigma-pattern"></div>
+          {/* Subtle background pattern */}
+          <div className="subtle-pattern"></div>
           
-          {/* Arcane background symbols */}
-          <div className="arcane-symbols"></div>
+          {/* Dot grid background */}
+          <div className="dot-grid"></div>
           
-          {/* Mysterious floating symbols */}
-          {floatingSymbols}
+          {/* Background gradient dots */}
+          {gradientDots}
           
-          {/* Dark fog effect */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-abyss opacity-30 -z-5 pointer-events-none"></div>
+          {/* Subtle gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-abyss opacity-10 -z-5 pointer-events-none"></div>
           
-          {/* Vignette effect */}
+          {/* Subtle vignette effect */}
           <div className="absolute inset-0 -z-5 pointer-events-none" 
             style={{
-              boxShadow: "inset 0 0 150px 60px rgba(0, 0, 0, 0.8)"
+              boxShadow: "inset 0 0 200px 100px rgba(14, 14, 16, 0.3)"
             }}
           ></div>
           
-          {/* Subtle animated gradient */}
-          <div className="absolute inset-0 -z-10 opacity-5 animate-morph" 
+          {/* Very subtle animated gradient */}
+          <div className="absolute inset-0 -z-10 opacity-5" 
             style={{
-              background: "radial-gradient(circle at 30% 20%, rgba(157, 48, 165, 0.3) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(207, 69, 32, 0.2) 0%, transparent 40%)"
+              background: "radial-gradient(circle at 30% 20%, rgba(109, 40, 217, 0.15) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(228, 84, 168, 0.1) 0%, transparent 40%)"
             }}
           ></div>
           
@@ -140,9 +139,9 @@ function App() {
           
           {/* Connection status indicator */}
           <div className="fixed bottom-3 right-3 z-50">
-            <div className={`flex items-center text-xs font-enigmatic px-2 py-1 rounded-md ${wsReady ? 'text-white bg-arcane bg-opacity-20' : 'text-rune bg-shadow bg-opacity-40'}`}>
+            <div className={`flex items-center text-xs px-2 py-1 rounded-md ${wsReady ? 'text-arcane bg-arcane bg-opacity-5' : 'text-ember bg-enigma bg-opacity-10'}`}>
               <div className={`w-2 h-2 rounded-full mr-2 ${wsReady ? 'bg-arcane animate-dim-pulse' : 'bg-ember'}`}></div>
-              {wsReady ? 'CONNECTED' : 'RECONNECTING'}
+              {wsReady ? 'Connected' : 'Reconnecting'}
             </div>
           </div>
         </div>

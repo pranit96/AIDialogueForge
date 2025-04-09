@@ -71,22 +71,22 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // New mysterious theme colors
-        "abyss": "#000000", // Pure black
-        "void": "#0F0F0F", // Nearly black
-        "shadow": "#161616", // Very dark gray
-        "enigma": "#1E1E1E", // Dark charcoal
-        "whisper": "#AAAAAA", // Soft gray for subtle text
-        "rune": "#666666", // Medium gray for less emphasis
-        "oracle": "#242424", // Dark gray with a hint of texture
-        "mystic": "#1F1F26", // Dark with a hint of blue for depth
-        "twilight": "#141414", // Another dark variant
-        "obsidian": "#0A0A0A", // Near-black with texture
-        "arcane": "#9D30A5", // Deep purple for accents
-        "silver": "#C0C0C0", // Silver highlight for contrast
-        "ember": "#CF4520", // Fiery accent for important elements
-        "celestial": "#44577D", // Deep blue for secondary accents
-        "ethereal": "#2C2C2C", // Dark gray with a soft touch
+        // New refined color palette inspired by Weaverly
+        "abyss": "#0E0E10", // Deep background
+        "void": "#111114", // Nearly black, but softer
+        "shadow": "#1B1B22", // Dark gray with subtle warmth
+        "enigma": "#23232D", // Dark charcoal with hint of purple
+        "whisper": "#DADAE2", // Light gray for primary text
+        "rune": "#8F8F9C", // Medium gray for secondary text  
+        "oracle": "#2A2A35", // Rich dark background for cards
+        "mystic": "#242440", // Dark with blue-purple tone
+        "twilight": "#16161D", // Deep shadow color
+        "obsidian": "#0D0D11", // Near-black with texture
+        "arcane": "#6D28D9", // Primary purple - vibrant but refined
+        "silver": "#F0F0F5", // Bright highlight color
+        "ember": "#E454A8", // Pink accent for important elements
+        "celestial": "#3C82F6", // Blue accent for interactions
+        "ethereal": "#2D2D39", // Elevated surface color
       },
       keyframes: {
         "accordion-down": {
@@ -106,16 +106,16 @@ export default {
           },
         },
         "dark-pulse": {
-          "0%, 100%": { boxShadow: "0 0 10px rgba(157, 48, 165, 0.3)" },
-          "50%": { boxShadow: "0 0 20px rgba(157, 48, 165, 0.6)" },
+          "0%, 100%": { boxShadow: "0 0 10px rgba(109, 40, 217, 0.2)" },
+          "50%": { boxShadow: "0 0 20px rgba(109, 40, 217, 0.4)" },
         },
         "ember-glow": {
-          "0%": { textShadow: "0 0 5px rgba(207, 69, 32, 0.5)" },
-          "100%": { textShadow: "0 0 15px rgba(207, 69, 32, 0.8)" },
+          "0%": { textShadow: "0 0 5px rgba(228, 84, 168, 0.3)" },
+          "100%": { textShadow: "0 0 15px rgba(228, 84, 168, 0.5)" },
         },
         "mystic-flow": {
-          "0%, 100%": { borderColor: "rgba(157, 48, 165, 0.7)" },
-          "50%": { borderColor: "rgba(207, 69, 32, 0.7)" },
+          "0%, 100%": { borderColor: "rgba(109, 40, 217, 0.5)" },
+          "50%": { borderColor: "rgba(228, 84, 168, 0.5)" },
         },
         "shadow-float": {
           "0%, 100%": { transform: "translateY(0)" },
@@ -127,7 +127,7 @@ export default {
         },
         "blink-caret": {
           from: { borderColor: "transparent" },
-          "50%": { borderColor: "#9D30A5" },
+          "50%": { borderColor: "#6D28D9" },
           to: { borderColor: "transparent" },
         },
         "loading": {
