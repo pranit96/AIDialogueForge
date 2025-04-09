@@ -30,12 +30,17 @@ function App() {
     const maxReconnectAttempts = 5;
     const reconnectInterval = 3000;
     let reconnectTimeout: ReturnType<typeof setTimeout>;
+    let keepAliveInterval: ReturnType<typeof setInterval>;
+    let sessionId = localStorage.getItem('neural_nexus_session_id');
 
     function connect() {
       try {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = window.location.host;
-        const wsUrl = `${protocol}//${host}/ws`;
+        // Include session ID in the URL if available
+        const wsUrl = sessionId 
+          ? `${protocol}//${host}/ws?sessionId=${sessionId}`
+          : `${protocol}//${host}/ws`;
         
         console.log(`Attempting WebSocket connection to ${wsUrl}`);
         ws = new WebSocket(wsUrl);
@@ -45,6 +50,31 @@ function App() {
           setWsReady(true);
           setSocket(ws);
           reconnectAttempts = 0; // Reset counter on successful connection
+          
+          // Setup keep-alive messages every 15 seconds
+          keepAliveInterval = setInterval(() => {
+            if (ws && ws.readyState === 1) { // WebSocket.OPEN = 1
+              try {
+                ws.send(JSON.stringify({ type: 'KEEP_ALIVE', data: { timestamp: Date.now() } }));
+              } catch (e) {
+                console.error('Failed to send keep-alive message:', e);
+              }
+            }
+          }, 15000);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            if (message.type === 'CONNECTION_ESTABLISHED' && message.data?.sessionId) {
+              // Store the session ID for reconnection
+              localStorage.setItem('neural_nexus_session_id', message.data.sessionId);
+              sessionId = message.data.sessionId;
+              console.log('Session established with ID:', sessionId);
+            }
+          } catch (e) {
+            console.error('Error processing incoming WebSocket message:', e);
+          }
         };
 
         ws.onerror = (error) => {
@@ -55,12 +85,14 @@ function App() {
           console.log(`WebSocket connection closed: ${event.code} ${event.reason}`);
           setWsReady(false);
           setSocket(null);
+          clearInterval(keepAliveInterval);
           
           // Attempt to reconnect if not a clean close
           if (reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++;
-            console.log(`Attempting to reconnect (${reconnectAttempts}/${maxReconnectAttempts})...`);
-            reconnectTimeout = setTimeout(connect, reconnectInterval);
+            const delay = reconnectInterval * Math.min(2, reconnectAttempts); // Exponential backoff
+            console.log(`Attempting to reconnect (${reconnectAttempts}/${maxReconnectAttempts}) in ${delay}ms...`);
+            reconnectTimeout = setTimeout(connect, delay);
           } else {
             console.log('Maximum reconnection attempts reached.');
           }
@@ -77,6 +109,7 @@ function App() {
         ws.close();
       }
       clearTimeout(reconnectTimeout);
+      clearInterval(keepAliveInterval);
     };
   }, []);
 

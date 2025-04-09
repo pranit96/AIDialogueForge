@@ -190,7 +190,7 @@ export default function EnigmaNetworkViz({
       {/* Mysterious background atmosphere */}
       <div className="absolute inset-0 bg-gradient-radial from-shadow to-abyss opacity-40 pointer-events-none"></div>
       
-      {/* Edges */}
+      {/* Enhanced Edges with animation and glow */}
       {edges.map((edge, index) => {
         const sourceNode = nodes[edge.source];
         const targetNode = nodes[edge.target];
@@ -203,43 +203,62 @@ export default function EnigmaNetworkViz({
         const length = Math.sqrt(dx * dx + dy * dy);
         const angle = Math.atan2(dy, dx) * (180 / Math.PI);
         
-        // Determine edge appearance based on type and hover state
-        let opacity = edge.type === 'important' ? 0.35 : 
-                      edge.type === 'normal' ? 0.2 : 0.1;
+        // Determine if this edge is connected to the hovered node
+        const isHoveredEdge = hoverNode !== null && (hoverNode === edge.source || hoverNode === edge.target);
+        
+        // Enhanced opacity calculation
+        let opacity = edge.type === 'important' ? 0.4 : 
+                      edge.type === 'normal' ? 0.25 : 0.15;
         
         // Enhance opacity if either connected node is hovered
-        if (hoverNode === edge.source || hoverNode === edge.target) {
-          opacity += 0.3;
+        if (isHoveredEdge) {
+          opacity = edge.type === 'important' ? 0.8 : 
+                    edge.type === 'normal' ? 0.6 : 0.4;
         }
         
-        // Edge style based on type
-        let edgeStyles = {};
+        // Enhanced edge gradient styles
+        let gradient;
+        let edgeShadow;
+        
         if (edge.type === 'important') {
-          edgeStyles = {
-            background: 'linear-gradient(90deg, rgba(157, 48, 165, 0.5), rgba(207, 69, 32, 0.5))'
-          };
+          gradient = 'linear-gradient(90deg, rgba(123, 43, 254, 0.6), rgba(226, 73, 190, 0.6))';
+          edgeShadow = '0 0 8px rgba(123, 43, 254, 0.3)';
         } else if (edge.type === 'normal') {
-          edgeStyles = {
-            background: 'linear-gradient(90deg, rgba(157, 48, 165, 0.3), rgba(68, 87, 125, 0.3))'
-          };
+          gradient = 'linear-gradient(90deg, rgba(123, 43, 254, 0.4), rgba(61, 145, 255, 0.4))';
+          edgeShadow = '0 0 5px rgba(123, 43, 254, 0.2)';
         } else {
-          edgeStyles = {
-            background: 'linear-gradient(90deg, rgba(30, 30, 38, 0.3), rgba(68, 87, 125, 0.2))'
-          };
+          gradient = 'linear-gradient(90deg, rgba(30, 30, 38, 0.3), rgba(61, 145, 255, 0.3))';
+          edgeShadow = '0 0 3px rgba(61, 145, 255, 0.1)';
         }
+        
+        // Enhance shadow for hovered edges
+        if (isHoveredEdge) {
+          edgeShadow = edge.type === 'important' ? 
+            '0 0 12px rgba(123, 43, 254, 0.5), 0 0 4px rgba(226, 73, 190, 0.5)' : 
+            edge.type === 'normal' ? 
+            '0 0 10px rgba(123, 43, 254, 0.4), 0 0 3px rgba(61, 145, 255, 0.4)' : 
+            '0 0 8px rgba(61, 145, 255, 0.3)';
+        }
+        
+        // Animation classes for energy flow effect
+        const animationClass = isHoveredEdge ? 'animate-energy-flow' : '';
         
         return (
           <div
             key={`edge-${index}`}
-            className="nexus-edge animate-fade-in-out"
+            className={`nexus-edge ${animationClass}`}
             style={{
               left: `${sourceNode.x}px`,
               top: `${sourceNode.y}px`,
               width: `${length}px`,
+              height: isHoveredEdge ? '2px' : '1px',
               transform: `rotate(${angle}deg)`,
+              background: gradient,
+              boxShadow: edgeShadow,
               animationDelay: `${edge.delay}s`,
               opacity,
-              ...edgeStyles
+              transformOrigin: 'left center',
+              transition: 'opacity 0.3s ease, box-shadow 0.3s ease, height 0.3s ease'
             }}
           />
         );
@@ -253,35 +272,64 @@ export default function EnigmaNetworkViz({
         const isConnectedToHover = hoverNode !== null && 
           connectedEdges.some(e => e.source === hoverNode || e.target === hoverNode);
         
-        let nodeColor = node.type === 'primary' ? 'bg-arcane' : 
-                       node.type === 'secondary' ? 'bg-ember' : 'bg-celestial';
+        let nodeColor;
+        let nodeShadow;
+        
+        // Enhanced color settings based on node type
+        if (node.type === 'primary') {
+          nodeColor = 'rgba(123, 43, 254, 0.75)'; // Purple
+          nodeShadow = '0 0 10px rgba(123, 43, 254, 0.4)';
+        } else if (node.type === 'secondary') {
+          nodeColor = 'rgba(226, 73, 190, 0.75)'; // Pink
+          nodeShadow = '0 0 10px rgba(226, 73, 190, 0.4)';
+        } else {
+          nodeColor = 'rgba(61, 145, 255, 0.75)'; // Blue
+          nodeShadow = '0 0 10px rgba(61, 145, 255, 0.4)';
+        }
         
         let nodeSize = node.size;
-        let nodeOpacity = node.type === 'primary' ? 0.5 : 
-                         node.type === 'secondary' ? 0.7 : 0.9;
+        let nodeOpacity = node.type === 'primary' ? 0.6 : 
+                         node.type === 'secondary' ? 0.75 : 0.9;
         
         // Enhance appearance when hovered or connected to hovered node
         if (isHovered) {
-          nodeSize *= 1.8;
+          nodeSize *= 2.0;
           nodeOpacity = 1;
+          // Enhanced glow for hovered nodes
+          nodeShadow = node.type === 'primary' ? 
+            '0 0 15px rgba(123, 43, 254, 0.8), 0 0 30px rgba(123, 43, 254, 0.3)' : 
+            node.type === 'secondary' ? 
+            '0 0 15px rgba(226, 73, 190, 0.8), 0 0 30px rgba(226, 73, 190, 0.3)' : 
+            '0 0 15px rgba(61, 145, 255, 0.8), 0 0 30px rgba(61, 145, 255, 0.3)';
         } else if (isConnectedToHover) {
-          nodeSize *= 1.4;
-          nodeOpacity = 0.9;
+          nodeSize *= 1.5;
+          nodeOpacity = 0.95;
+          // Medium glow for connected nodes
+          nodeShadow = node.type === 'primary' ? 
+            '0 0 12px rgba(123, 43, 254, 0.6), 0 0 20px rgba(123, 43, 254, 0.2)' : 
+            node.type === 'secondary' ? 
+            '0 0 12px rgba(226, 73, 190, 0.6), 0 0 20px rgba(226, 73, 190, 0.2)' : 
+            '0 0 12px rgba(61, 145, 255, 0.6), 0 0 20px rgba(61, 145, 255, 0.2)';
         }
+        
+        // Determine animation class
+        const animationClass = isHovered ? 'animate-neuron-pulse' : '';
         
         return (
           <div
             key={`node-${node.id}`}
-            className={`nexus-node ${nodeColor} ${isHovered ? 'animate-dark-pulse' : ''}`}
+            className={`nexus-node ${animationClass}`}
             style={{
               left: `${node.x}px`,
               top: `${node.y}px`,
               width: `${nodeSize}px`,
               height: `${nodeSize}px`,
+              backgroundColor: nodeColor,
+              boxShadow: nodeShadow,
               animationDelay: `${node.pulseDelay}s`,
               opacity: nodeOpacity,
               zIndex: isHovered ? 10 : 1,
-              transition: 'transform 0.3s ease, opacity 0.3s ease, width 0.3s ease, height 0.3s ease',
+              transition: 'transform 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67), opacity 0.3s ease, width 0.3s ease, height 0.3s ease, box-shadow 0.3s ease',
               transform: isHovered ? 'scale(1.2)' : isConnectedToHover ? 'scale(1.1)' : 'scale(1)'
             }}
             onMouseEnter={() => handleNodeHover(node.id)}

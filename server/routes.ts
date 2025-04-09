@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { Groq } from "groq-sdk";
 import { WebSocketServer, WebSocket } from "ws";
 import { z } from "zod";
+import crypto from "crypto";
 import { 
   insertConversationSchema, 
   insertMessageSchema,
@@ -22,9 +23,9 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY || "",
 });
 
-// WebSocket connection handling
+// Enhanced WebSocket connection handling with better stability
 const setupWebSocketServer = (server: Server) => {
-  // Create WebSocket server with more permissive settings for Replit environment
+  // Create WebSocket server with optimized settings for stable connections
   const wss = new WebSocketServer({ 
     noServer: true,
     perMessageDeflate: {
@@ -41,19 +42,32 @@ const setupWebSocketServer = (server: Server) => {
       serverMaxWindowBits: 10,
       concurrencyLimit: 10,
       threshold: 1024
-    }
+    },
+    // Increase ping/pong timeout for more stable connections
+    clientTracking: true
   });
 
+  // Enhanced session tracking for reconnection support
+  const connectedClients = new Map<string, { ws: WebSocket, sessionId: string }>();
+  
   server.on('upgrade', (request, socket, head) => {
-    // Only handle upgrade requests for the /ws path
+    // Handle upgrade requests for the /ws path
     const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
     
     if (pathname === '/ws') {
-      console.log(`WebSocket upgrade requested from ${request.headers.host}`);
+      console.log(`WebSocket upgrade requested from ${request.headers.host || 'unknown'}`);
       
-      // Handle unexpected socket closures
+      // Set longer timeout to allow for connection setup
+      socket.setTimeout?.(30000); // Optional chaining in case setTimeout isn't available
+      
+      // Handle unexpected socket closures during handshake
       socket.on('error', (err) => {
         console.error('WebSocket upgrade socket error:', err);
+        try {
+          socket.end('HTTP/1.1 500 Internal Server Error\r\n\r\n');
+        } catch (e) {
+          console.error('Failed to send error response:', e);
+        }
       });
       
       try {
@@ -62,56 +76,150 @@ const setupWebSocketServer = (server: Server) => {
         });
       } catch (error) {
         console.error('Error during WebSocket upgrade:', error);
-        socket.destroy();
+        try {
+          socket.destroy();
+        } catch (e) {
+          console.error('Failed to destroy socket after upgrade error:', e);
+        }
       }
     } else {
       // Not a WebSocket upgrade for our path
-      socket.destroy();
+      try {
+        socket.destroy();
+      } catch (e) {
+        console.error('Failed to destroy invalid upgrade socket:', e);
+      }
     }
   });
+  
+  // Interval to clean up dead connections
+  const connectionCleanupInterval = setInterval(() => {
+    try {
+      wss.clients.forEach((ws) => {
+        // Use numerical constants: WebSocket.CLOSED = 3, WebSocket.CLOSING = 2
+        if (ws.readyState === 3 || ws.readyState === 2) {
+          try {
+            ws.terminate();
+          } catch (e) {
+            console.error('Error terminating dead connection:', e);
+          }
+        }
+      });
+    } catch (e) {
+      console.error('Error in connection cleanup interval:', e);
+    }
+  }, 60000);
   
   wss.on("connection", (ws, request) => {
     console.log("New client connected");
     
-    // Add ping interval to keep connection alive through proxies
+    // Create unique session ID for this connection or recover previous one
+    const sessionId = request.url ? new URLSearchParams(request.url.split('?')[1]).get('sessionId') || crypto.randomUUID() : crypto.randomUUID();
+    let clientIP = request.headers['x-forwarded-for'] || request.socket.remoteAddress || 'unknown';
+    if (Array.isArray(clientIP)) clientIP = clientIP[0];
+    const clientId = `${clientIP}-${sessionId}`;
+    
+    // Track this connection
+    connectedClients.set(clientId, { ws, sessionId });
+    
+    // Add ping interval to keep connection alive through proxies (more frequent)
     const pingInterval = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
+      if (ws.readyState === 1) { // WebSocket.OPEN = 1
         try {
           ws.ping();
         } catch (err) {
           console.error("Ping error:", err);
+          
+          // Try to reconnect if ping fails
+          try {
+            // WebSocket.CLOSING = 2, WebSocket.CLOSED = 3
+            if (ws.readyState !== 3 && ws.readyState !== 2) {
+              ws.terminate();
+            }
+          } catch (termErr) {
+            console.error("Failed to terminate connection after ping failure:", termErr);
+          }
         }
+      } else if (ws.readyState === 2 || ws.readyState === 3) {
+        // WebSocket.CLOSING = 2, WebSocket.CLOSED = 3
+        clearInterval(pingInterval);
+        connectedClients.delete(clientId);
       }
-    }, 30000);
+    }, 20000); // More frequent pings for better stability
     
-    // Send a welcome message to the client
+    // Send a welcome message to the client with session info
     try {
       ws.send(JSON.stringify({
         type: "CONNECTION_ESTABLISHED",
-        data: { message: "Connected to NEXUSMINDS server" }
+        data: { 
+          message: "Connected to Neural Nexus server",
+          sessionId: sessionId,
+          timestamp: Date.now()
+        }
       }));
     } catch (err) {
       console.error("Failed to send welcome message:", err);
     }
     
-    // Handle messages from clients
+    // Handle incoming messages from clients
     ws.on("message", (message) => {
-      console.log("Received message:", message.toString());
+      try {
+        const parsedMessage = JSON.parse(message.toString());
+        console.log("Received message:", parsedMessage.type || "Unknown type");
+        
+        // Handle different message types
+        switch (parsedMessage.type) {
+          case "KEEP_ALIVE":
+            // Respond to keep-alive messages
+            try {
+              ws.send(JSON.stringify({
+                type: "KEEP_ALIVE_ACK",
+                data: { timestamp: Date.now() }
+              }));
+            } catch (e) {
+              console.error("Failed to send keep-alive ack:", e);
+            }
+            break;
+          
+          // Add other message type handlers as needed
+        }
+      } catch (e) {
+        console.error("Error processing client message:", e);
+      }
     });
     
+    // Enhanced error handling
     ws.on("error", (error) => {
-      console.error("WebSocket error:", error);
+      console.error("WebSocket connection error:", error);
+      try {
+        // Try to notify client of the error
+        if (ws.readyState === 1) { // WebSocket.OPEN = 1
+          ws.send(JSON.stringify({
+            type: "CONNECTION_ERROR",
+            data: { message: "Connection error detected" }
+          }));
+        }
+      } catch (e) {
+        console.error("Failed to send error notification:", e);
+      }
     });
     
+    // Enhanced close handling
     ws.on("close", (code, reason) => {
       console.log(`Client disconnected. Code: ${code}, Reason: ${reason ? reason.toString() : "none"}`);
       clearInterval(pingInterval);
+      connectedClients.delete(clientId);
     });
   });
   
-  // Add error handler for the whole server
+  // Add error handler for the entire server
   wss.on('error', (error) => {
     console.error('WebSocket server error:', error);
+  });
+  
+  // Clean up interval when server closes
+  server.on('close', () => {
+    clearInterval(connectionCleanupInterval);
   });
   
   return wss;
@@ -120,7 +228,7 @@ const setupWebSocketServer = (server: Server) => {
 // Send message to all connected clients
 const broadcastMessage = (wss: WebSocketServer, type: string, data: any) => {
   wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
+    if (client.readyState === 1) { // WebSocket.OPEN = 1
       try {
         client.send(JSON.stringify({ type, data }));
       } catch (err) {
