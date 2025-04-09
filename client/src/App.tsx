@@ -113,12 +113,53 @@ function App() {
     };
   }, []);
 
-  // Create subtle gradient dots for background
-  const gradientDots = Array.from({ length: 20 }).map((_, i) => {
+  // Create ethereal cosmic particles for background
+  const gradientDots = Array.from({ length: 35 }).map((_, i) => {
     const randomX = Math.floor(Math.random() * 100);
     const randomY = Math.floor(Math.random() * 100);
-    const randomSize = Math.floor(Math.random() * 4) + 2;
-    const randomOpacity = 0.03 + (Math.random() * 0.05);
+    const randomSize = Math.floor(Math.random() * 6) + 2;
+    const randomOpacity = 0.04 + (Math.random() * 0.08);
+    const randomDelay = Math.floor(Math.random() * 15);
+    const randomDuration = 15 + Math.floor(Math.random() * 20);
+    
+    // Decide particle type
+    let particleType;
+    if (i % 5 === 0) {
+      particleType = 'star';
+    } else if (i % 4 === 0) {
+      particleType = 'nebula';
+    } else {
+      particleType = 'energy';
+    }
+    
+    // Style based on particle type
+    let particleStyle = {};
+    
+    if (particleType === 'star') {
+      // Bright star particles
+      particleStyle = {
+        background: 'rgba(255, 255, 255, 0.7)',
+        boxShadow: `0 0 ${randomSize * 2}px rgba(255, 255, 255, 0.8), 0 0 ${randomSize * 3}px rgba(123, 43, 254, 0.5)`,
+        animation: `pulse-glow ${randomDuration}s infinite alternate ease-in-out ${randomDelay}s`
+      };
+    } else if (particleType === 'nebula') {
+      // Colorful nebula particles
+      const hue = Math.floor(Math.random() * 60) + 260; // Purple to blue range
+      particleStyle = {
+        background: `hsla(${hue}, 80%, 70%, 0.6)`,
+        filter: 'blur(2px)',
+        animation: `cosmic-drift ${randomDuration}s infinite alternate ease-in-out ${randomDelay}s`,
+        boxShadow: `0 0 ${randomSize * 1.5}px hsla(${hue}, 80%, 70%, 0.5)`
+      };
+    } else {
+      // Energy particles
+      const isArcane = i % 2 === 0;
+      particleStyle = {
+        background: isArcane ? 'rgba(123, 43, 254, 0.4)' : 'rgba(228, 84, 168, 0.4)',
+        filter: 'blur(1px)',
+        animation: `ethereal-float ${randomDuration}s infinite ease-in-out ${randomDelay}s`
+      };
+    }
     
     return (
       <div 
@@ -129,9 +170,9 @@ function App() {
           top: `${randomY}%`,
           width: `${randomSize}px`,
           height: `${randomSize}px`,
-          background: i % 2 === 0 ? 'rgba(109, 40, 217, 0.3)' : 'rgba(228, 84, 168, 0.3)',
-          filter: 'blur(1px)',
-          opacity: randomOpacity
+          opacity: randomOpacity,
+          zIndex: particleType === 'star' ? 2 : 1,
+          ...particleStyle
         }}
       />
     );
@@ -147,23 +188,27 @@ function App() {
           {/* Dot grid background */}
           <div className="dot-grid"></div>
           
+          {/* Mysterious cosmic fog */}
+          <div className="cosmic-fog"></div>
+          
           {/* Background gradient dots */}
           {gradientDots}
           
           {/* Subtle gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-abyss opacity-10 -z-5 pointer-events-none"></div>
           
-          {/* Subtle vignette effect */}
+          {/* Enhanced mysterious vignette effect */}
           <div className="absolute inset-0 -z-5 pointer-events-none" 
             style={{
-              boxShadow: "inset 0 0 200px 100px rgba(14, 14, 16, 0.3)"
+              boxShadow: "inset 0 0 250px 100px rgba(14, 14, 16, 0.5), inset 0 0 150px 50px rgba(51, 14, 68, 0.2)"
             }}
           ></div>
           
-          {/* Very subtle animated gradient */}
-          <div className="absolute inset-0 -z-10 opacity-5" 
+          {/* Ethereal cosmic background with animated gradients */}
+          <div className="absolute inset-0 -z-10 opacity-20 overflow-hidden" 
             style={{
-              background: "radial-gradient(circle at 30% 20%, rgba(109, 40, 217, 0.15) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(228, 84, 168, 0.1) 0%, transparent 40%)"
+              background: "radial-gradient(circle at 30% 20%, rgba(109, 40, 217, 0.25) 0%, transparent 45%), radial-gradient(circle at 70% 80%, rgba(228, 84, 168, 0.2) 0%, transparent 50%), radial-gradient(ellipse at 40% 60%, rgba(61, 145, 255, 0.15) 0%, transparent 70%)",
+              animation: "cosmic-shift 25s infinite ease-in-out"
             }}
           ></div>
           

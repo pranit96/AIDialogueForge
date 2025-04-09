@@ -58,7 +58,7 @@ const setupWebSocketServer = (server: Server) => {
       console.log(`WebSocket upgrade requested from ${request.headers.host || 'unknown'}`);
       
       // Set longer timeout to allow for connection setup
-      socket.setTimeout?.(30000); // Optional chaining in case setTimeout isn't available
+      // socket.setTimeout is not valid on Duplex, so we'll handle timeouts another way
       
       // Handle unexpected socket closures during handshake
       socket.on('error', (err) => {
@@ -96,8 +96,8 @@ const setupWebSocketServer = (server: Server) => {
   const connectionCleanupInterval = setInterval(() => {
     try {
       wss.clients.forEach((ws) => {
-        // Use numerical constants: WebSocket.CLOSED = 3, WebSocket.CLOSING = 2
-        if (ws.readyState === 3 || ws.readyState === 2) {
+        // Check for closed or closing states (readyState !== 1)
+        if (ws.readyState !== 1) {
           try {
             ws.terminate();
           } catch (e) {
@@ -132,16 +132,16 @@ const setupWebSocketServer = (server: Server) => {
           
           // Try to reconnect if ping fails
           try {
-            // WebSocket.CLOSING = 2, WebSocket.CLOSED = 3
-            if (ws.readyState !== 3 && ws.readyState !== 2) {
+            // Check if the socket is still OPEN (readyState 1)
+            if (ws.readyState === 1) {
               ws.terminate();
             }
           } catch (termErr) {
             console.error("Failed to terminate connection after ping failure:", termErr);
           }
         }
-      } else if (ws.readyState === 2 || ws.readyState === 3) {
-        // WebSocket.CLOSING = 2, WebSocket.CLOSED = 3
+      } else if (ws.readyState !== 1) {
+        // If socket is not OPEN (readyState 1), clean up
         clearInterval(pingInterval);
         connectedClients.delete(clientId);
       }

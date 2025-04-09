@@ -27,9 +27,9 @@ interface Edge {
 
 export default function EnigmaNetworkViz({
   className = '',
-  nodeCount = 40,
-  edgeCount = 60,
-  animationSpeed = 0.5
+  nodeCount = 65,
+  edgeCount = 100,
+  animationSpeed = 0.6
 }: NeuralNetworkVizProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -216,28 +216,35 @@ export default function EnigmaNetworkViz({
                     edge.type === 'normal' ? 0.6 : 0.4;
         }
         
-        // Enhanced edge gradient styles
+        // Ethereal energy gradient styles for edges
         let gradient;
         let edgeShadow;
+        let filter = 'none';
+        let backgroundSize = '100% 100%';
         
         if (edge.type === 'important') {
-          gradient = 'linear-gradient(90deg, rgba(123, 43, 254, 0.6), rgba(226, 73, 190, 0.6))';
-          edgeShadow = '0 0 8px rgba(123, 43, 254, 0.3)';
+          gradient = 'linear-gradient(90deg, rgba(123, 43, 254, 0.7), rgba(226, 73, 190, 0.7), rgba(123, 43, 254, 0.7))';
+          edgeShadow = '0 0 10px rgba(123, 43, 254, 0.4), 0 0 20px rgba(123, 43, 254, 0.2)';
+          backgroundSize = '200% 100%';
         } else if (edge.type === 'normal') {
-          gradient = 'linear-gradient(90deg, rgba(123, 43, 254, 0.4), rgba(61, 145, 255, 0.4))';
-          edgeShadow = '0 0 5px rgba(123, 43, 254, 0.2)';
+          gradient = 'linear-gradient(90deg, rgba(123, 43, 254, 0.5), rgba(61, 145, 255, 0.5), rgba(123, 43, 254, 0.5))';
+          edgeShadow = '0 0 8px rgba(123, 43, 254, 0.25), 0 0 15px rgba(123, 43, 254, 0.1)';
+          backgroundSize = '200% 100%';
         } else {
-          gradient = 'linear-gradient(90deg, rgba(30, 30, 38, 0.3), rgba(61, 145, 255, 0.3))';
-          edgeShadow = '0 0 3px rgba(61, 145, 255, 0.1)';
+          gradient = 'linear-gradient(90deg, rgba(30, 30, 38, 0.4), rgba(61, 145, 255, 0.4), rgba(30, 30, 38, 0.4))';
+          edgeShadow = '0 0 5px rgba(61, 145, 255, 0.15), 0 0 10px rgba(61, 145, 255, 0.05)';
+          backgroundSize = '200% 100%';
         }
         
-        // Enhance shadow for hovered edges
+        // Enhance effects for hovered edges with mysterious glow
         if (isHoveredEdge) {
+          filter = 'saturate(1.5) brightness(1.2)';
+          
           edgeShadow = edge.type === 'important' ? 
-            '0 0 12px rgba(123, 43, 254, 0.5), 0 0 4px rgba(226, 73, 190, 0.5)' : 
+            '0 0 15px rgba(123, 43, 254, 0.6), 0 0 25px rgba(226, 73, 190, 0.4), 0 0 40px rgba(123, 43, 254, 0.2)' : 
             edge.type === 'normal' ? 
-            '0 0 10px rgba(123, 43, 254, 0.4), 0 0 3px rgba(61, 145, 255, 0.4)' : 
-            '0 0 8px rgba(61, 145, 255, 0.3)';
+            '0 0 12px rgba(123, 43, 254, 0.5), 0 0 20px rgba(61, 145, 255, 0.3), 0 0 35px rgba(123, 43, 254, 0.15)' : 
+            '0 0 10px rgba(61, 145, 255, 0.4), 0 0 20px rgba(30, 30, 38, 0.2), 0 0 30px rgba(61, 145, 255, 0.1)';
         }
         
         // Animation classes for energy flow effect
@@ -254,11 +261,13 @@ export default function EnigmaNetworkViz({
               height: isHoveredEdge ? '2px' : '1px',
               transform: `rotate(${angle}deg)`,
               background: gradient,
+              backgroundSize: backgroundSize,
               boxShadow: edgeShadow,
+              filter: filter,
               animationDelay: `${edge.delay}s`,
               opacity,
               transformOrigin: 'left center',
-              transition: 'opacity 0.3s ease, box-shadow 0.3s ease, height 0.3s ease'
+              transition: 'opacity 0.3s ease, box-shadow 0.3s ease, height 0.3s ease, filter 0.3s ease'
             }}
           />
         );
@@ -275,41 +284,48 @@ export default function EnigmaNetworkViz({
         let nodeColor;
         let nodeShadow;
         
-        // Enhanced color settings based on node type
+        // Cosmic ethereal color settings based on node type
         if (node.type === 'primary') {
-          nodeColor = 'rgba(123, 43, 254, 0.75)'; // Purple
-          nodeShadow = '0 0 10px rgba(123, 43, 254, 0.4)';
+          nodeColor = 'rgba(123, 43, 254, 0.85)'; // Vivid purple
+          nodeShadow = '0 0 12px rgba(123, 43, 254, 0.6)';
         } else if (node.type === 'secondary') {
-          nodeColor = 'rgba(226, 73, 190, 0.75)'; // Pink
-          nodeShadow = '0 0 10px rgba(226, 73, 190, 0.4)';
+          nodeColor = 'rgba(226, 73, 190, 0.85)'; // Vivid pink
+          nodeShadow = '0 0 12px rgba(226, 73, 190, 0.6)';
         } else {
-          nodeColor = 'rgba(61, 145, 255, 0.75)'; // Blue
-          nodeShadow = '0 0 10px rgba(61, 145, 255, 0.4)';
+          nodeColor = 'rgba(61, 145, 255, 0.85)'; // Vivid blue
+          nodeShadow = '0 0 12px rgba(61, 145, 255, 0.6)';
         }
         
         let nodeSize = node.size;
-        let nodeOpacity = node.type === 'primary' ? 0.6 : 
-                         node.type === 'secondary' ? 0.75 : 0.9;
+        let nodeOpacity = node.type === 'primary' ? 0.75 : 
+                         node.type === 'secondary' ? 0.8 : 0.9;
+        
+        // Mysterious filter effects
+        let nodeFilter = 'blur(0.5px)';
         
         // Enhance appearance when hovered or connected to hovered node
         if (isHovered) {
-          nodeSize *= 2.0;
+          nodeSize *= 2.5;
           nodeOpacity = 1;
-          // Enhanced glow for hovered nodes
+          nodeFilter = 'blur(0px) contrast(1.2)';
+          
+          // Cosmic glow for hovered nodes
           nodeShadow = node.type === 'primary' ? 
-            '0 0 15px rgba(123, 43, 254, 0.8), 0 0 30px rgba(123, 43, 254, 0.3)' : 
+            '0 0 20px rgba(123, 43, 254, 0.9), 0 0 40px rgba(123, 43, 254, 0.4), 0 0 60px rgba(123, 43, 254, 0.2)' : 
             node.type === 'secondary' ? 
-            '0 0 15px rgba(226, 73, 190, 0.8), 0 0 30px rgba(226, 73, 190, 0.3)' : 
-            '0 0 15px rgba(61, 145, 255, 0.8), 0 0 30px rgba(61, 145, 255, 0.3)';
+            '0 0 20px rgba(226, 73, 190, 0.9), 0 0 40px rgba(226, 73, 190, 0.4), 0 0 60px rgba(226, 73, 190, 0.2)' : 
+            '0 0 20px rgba(61, 145, 255, 0.9), 0 0 40px rgba(61, 145, 255, 0.4), 0 0 60px rgba(61, 145, 255, 0.2)';
         } else if (isConnectedToHover) {
-          nodeSize *= 1.5;
+          nodeSize *= 1.8;
           nodeOpacity = 0.95;
-          // Medium glow for connected nodes
+          nodeFilter = 'blur(0px) contrast(1.1)';
+          
+          // Enhanced ethereal glow for connected nodes
           nodeShadow = node.type === 'primary' ? 
-            '0 0 12px rgba(123, 43, 254, 0.6), 0 0 20px rgba(123, 43, 254, 0.2)' : 
+            '0 0 15px rgba(123, 43, 254, 0.8), 0 0 30px rgba(123, 43, 254, 0.3), 0 0 45px rgba(123, 43, 254, 0.1)' : 
             node.type === 'secondary' ? 
-            '0 0 12px rgba(226, 73, 190, 0.6), 0 0 20px rgba(226, 73, 190, 0.2)' : 
-            '0 0 12px rgba(61, 145, 255, 0.6), 0 0 20px rgba(61, 145, 255, 0.2)';
+            '0 0 15px rgba(226, 73, 190, 0.8), 0 0 30px rgba(226, 73, 190, 0.3), 0 0 45px rgba(226, 73, 190, 0.1)' : 
+            '0 0 15px rgba(61, 145, 255, 0.8), 0 0 30px rgba(61, 145, 255, 0.3), 0 0 45px rgba(61, 145, 255, 0.1)';
         }
         
         // Determine animation class
@@ -326,10 +342,11 @@ export default function EnigmaNetworkViz({
               height: `${nodeSize}px`,
               backgroundColor: nodeColor,
               boxShadow: nodeShadow,
+              filter: nodeFilter,
               animationDelay: `${node.pulseDelay}s`,
               opacity: nodeOpacity,
               zIndex: isHovered ? 10 : 1,
-              transition: 'transform 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67), opacity 0.3s ease, width 0.3s ease, height 0.3s ease, box-shadow 0.3s ease',
+              transition: 'transform 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67), opacity 0.3s ease, width 0.3s ease, height 0.3s ease, box-shadow 0.3s ease, filter 0.5s ease',
               transform: isHovered ? 'scale(1.2)' : isConnectedToHover ? 'scale(1.1)' : 'scale(1)'
             }}
             onMouseEnter={() => handleNodeHover(node.id)}
