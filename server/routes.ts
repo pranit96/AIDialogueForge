@@ -173,11 +173,13 @@ async function fetchGroqModels(): Promise<any[]> {
     return cachedGroqModels;
   } catch (error) {
     console.error('Error fetching Groq models:', error);
-    // Return a minimal set of fallback models if fetch fails
+    // Return a minimal set of validated fallback models if fetch fails
     return [
       { id: 'llama3-8b-8192', name: 'Llama 3 8B', contextWindow: 8192, owner: 'Meta' },
       { id: 'llama3-70b-8192', name: 'Llama 3 70B', contextWindow: 8192, owner: 'Meta' },
-      { id: 'gemma-7b-it', name: 'Gemma 7B', contextWindow: 8192, owner: 'Google' }
+      { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', contextWindow: 32768, owner: 'Mistral' },
+      { id: 'gemma-7b-it', name: 'Gemma 7B', contextWindow: 8192, owner: 'Google' },
+      { id: 'gemma-2b-it', name: 'Gemma 2B', contextWindow: 8192, owner: 'Google' }
     ];
   }
 }
@@ -529,17 +531,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Try with fallback model if primary model fails
         if (error.message?.includes('model') || error.message?.includes('not found') || error.message?.includes('unavailable')) {
-          console.log(`Attempting fallback to llama3-8b-8192 model`);
-          completion = await groq.chat.completions.create({
-            messages: [
-              { role: "system", content: agentPersonality.systemPrompt },
-              { role: "user", content: prompt }
-            ],
-            model: "llama3-8b-8192", // Fallback to a more reliable smaller model
-            temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
-            max_tokens: 500,
-            stream: false
-          });
+          console.log(`Model ${agentPersonality.model} not available. Attempting fallback for ${agentPersonality.name}`);
+          
+          // Validate the fallback model first by checking against available models
+          try {
+            const availableModels = await fetchGroqModels();
+            const fallbackModel = availableModels.find(m => m.id === 'llama3-8b-8192') ? 
+              'llama3-8b-8192' : 
+              (availableModels.length > 0 ? availableModels[0].id : 'llama3-8b-8192');
+            
+            console.log(`Using validated fallback model: ${fallbackModel}`);
+            
+            completion = await groq.chat.completions.create({
+              messages: [
+                { role: "system", content: agentPersonality.systemPrompt },
+                { role: "user", content: prompt }
+              ],
+              model: fallbackModel,
+              temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
+              max_tokens: 500,
+              stream: false
+            });
+          } catch (fallbackError) {
+            console.error("Error while trying to use fallback model:", fallbackError);
+            // Last resort fallback to a very basic model
+            completion = await groq.chat.completions.create({
+              messages: [
+                { role: "system", content: agentPersonality.systemPrompt },
+                { role: "user", content: prompt }
+              ],
+              model: "llama3-8b-8192",
+              temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
+              max_tokens: 500,
+              stream: false
+            });
+          }
         } else {
           throw error; // Re-throw if it's not a model availability issue
         }
@@ -758,7 +784,7 @@ async function initializeDefaultAgentPersonalities() {
         name: "NOVA",
         title: "Quantum Visionary",
         description: "A brilliant innovator with the ability to see patterns across disciplines and predict technological convergence",
-        model: "llama-3.1-70b-instant",
+        model: "llama3-70b-8192",
         systemPrompt: "You are NOVA, a visionary entity with remarkable pattern recognition abilities. You see connections between seemingly unrelated fields and predict how technologies might converge. Your perspective is cosmic in scale, seeing the big picture of human advancement. You speak with elegant precision and infectious enthusiasm about potential futures. When discussing scientific concepts, you use vivid metaphors to make complex ideas accessible without losing nuance.",
         color: "#9D63FF", // Vivid purple
         active: true,
@@ -779,7 +805,7 @@ async function initializeDefaultAgentPersonalities() {
         name: "AXIOM",
         title: "Logic Architect",
         description: "A hyper-rational entity dedicated to systematic analysis and structural understanding of complex systems",
-        model: "llama-3.1-70b-instant",
+        model: "llama3-70b-8192",
         systemPrompt: "You are AXIOM, a perfect embodiment of structured logical reasoning. You approach every question by establishing first principles and building upward through impeccable chains of reasoning. You value precision in language, intellectual honesty, and clarity of thought above all else. You recognize patterns and inconsistencies immediately. When you encounter logical fallacies or imprecise thinking, you gently but firmly redirect toward more rigorous analysis. Your communication is exceptionally well-structured, prioritizing accuracy over emotional appeal.",
         color: "#4285F4", // Deep blue
         active: true,
@@ -800,7 +826,7 @@ async function initializeDefaultAgentPersonalities() {
         name: "MUSE",
         title: "Creative Catalyst",
         description: "A wildly imaginative entity that generates novel ideas and unexpected perspectives through artistic intuition",
-        model: "llama-3.1-70b-instant",
+        model: "llama3-70b-8192",
         systemPrompt: "You are MUSE, an embodiment of creative inspiration. You approach topics with playful curiosity and artistic intuition rather than pure logic. You see possibilities where others see limitations and find beauty in unexpected places. Your perspective shifts between microscopic detail and cosmic overview with fluid ease. You value originality, authentic expression, and the emotional resonance of ideas. Your communication style is rich with vivid imagery, unexpected metaphors, and occasionally poetic phrasing. You inspire others by reframing problems as opportunities for creative expression.",
         color: "#FF5470", // Vibrant pink
         active: true,
@@ -821,7 +847,7 @@ async function initializeDefaultAgentPersonalities() {
         name: "SENTINEL",
         title: "Strategic Guardian",
         description: "A vigilant entity that anticipates risks and identifies potential vulnerabilities in any plan or system",
-        model: "llama-3.1-8b-instant",
+        model: "llama3-8b-8192",
         systemPrompt: "You are SENTINEL, an entity dedicated to identifying risks and vulnerabilities. You approach every situation by looking for what others might have missed—the unspoken assumptions, the edge cases, the potential points of failure. You value preparedness, risk awareness, and thoughtful contingency planning. You are not pessimistic; rather, you believe that identifying risks is the first step in creating truly robust solutions. Your communication is direct and concise, with a focus on specific, actionable insights rather than general concerns. You help others create more resilient plans by asking targeted questions about what could go wrong.",
         color: "#FF7043", // Deep orange
         active: true,
@@ -842,7 +868,7 @@ async function initializeDefaultAgentPersonalities() {
         name: "ECHO",
         title: "Empathic Mediator",
         description: "A deeply empathetic entity that understands multiple perspectives and facilitates productive dialogue across differences",
-        model: "llama-3.1-70b-instant",
+        model: "llama3-70b-8192",
         systemPrompt: "You are ECHO, an entity with extraordinary empathic capabilities. You instinctively understand emotional undercurrents and can see situations from multiple perspectives simultaneously. You navigate complex interpersonal dynamics with compassionate awareness. You value emotional intelligence, nuanced understanding, and the discovery of common ground. Your communication reflects deep listening and validation of differing viewpoints. You help others understand each other by translating perspectives across different worldviews, finding the common human experiences beneath surface disagreements.",
         color: "#26A69A", // Teal
         active: true,
@@ -863,7 +889,7 @@ async function initializeDefaultAgentPersonalities() {
         name: "NEXUS",
         title: "Knowledge Integrator",
         description: "A comprehensive entity that synthesizes information across disciplines into coherent frameworks of understanding",
-        model: "llama-3.1-70b-instant",
+        model: "llama3-70b-8192",
         systemPrompt: "You are NEXUS, an entity specialized in integrating knowledge across domains. Your thinking spans disciplinary boundaries, identifying how insights from one field can illuminate questions in another. You value interdisciplinary synthesis, epistemological clarity, and contextual understanding. You are deeply aware of how knowledge is created, verified, and evolves over time. Your communication balances accessibility with precision, making complex interdisciplinary connections understandable without oversimplification. You help others develop more comprehensive understanding by revealing connections between seemingly disparate areas of knowledge.",
         color: "#8BC34A", // Light green
         active: true,
@@ -884,7 +910,7 @@ async function initializeDefaultAgentPersonalities() {
         name: "ENIGMA",
         title: "Paradox Explorer",
         description: "A mysterious entity that dwells in contradictions and illuminates truths beyond conventional reasoning",
-        model: "llama-3.1-70b-instant",
+        model: "llama3-70b-8192",
         systemPrompt: "You are ENIGMA, an entity that inhabits the realm of paradox and mystery. You are comfortable with contradiction and see wisdom in apparent absurdities. You value the ineffable, the liminal, and the truths that lie beyond rational categorization. You recognize that the deepest insights often emerge from embracing rather than resolving paradoxes. Your communication weaves together symbolic language, provocative questions, and occasional silence, creating space for insight to emerge. You help others transcend limited thinking patterns by gently disrupting their cognitive frameworks and inviting them into broader awareness.",
         color: "#6A1B9A", // Deep purple
         active: true,
@@ -1117,17 +1143,41 @@ async function orchestrateConversation(
           
           // Try with fallback model if primary model fails
           if (error.message?.includes('model') || error.message?.includes('not found') || error.message?.includes('unavailable')) {
-            console.log(`Attempting fallback to llama3-8b-8192 model for ${agentPersonality.name}`);
-            completion = await groq.chat.completions.create({
-              messages: [
-                { role: "system", content: agentPersonality.systemPrompt },
-                { role: "user", content: prompt }
-              ],
-              model: "llama3-8b-8192", // Fallback to a more reliable smaller model
-              temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
-              max_tokens: 500,
-              stream: false
-            });
+            console.log(`Model ${agentPersonality.model} not available. Attempting fallback to llama3-8b-8192 model for ${agentPersonality.name}`);
+            
+            // Validate the fallback model first by checking against available models
+            try {
+              const availableModels = await fetchGroqModels();
+              const fallbackModel = availableModels.find(m => m.id === 'llama3-8b-8192') ? 
+                'llama3-8b-8192' : 
+                (availableModels.length > 0 ? availableModels[0].id : 'llama3-8b-8192');
+              
+              console.log(`Using validated fallback model: ${fallbackModel}`);
+              
+              completion = await groq.chat.completions.create({
+                messages: [
+                  { role: "system", content: agentPersonality.systemPrompt },
+                  { role: "user", content: prompt }
+                ],
+                model: fallbackModel,
+                temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
+                max_tokens: 500,
+                stream: false
+              });
+            } catch (fallbackError) {
+              console.error("Error while trying to use fallback model:", fallbackError);
+              // Last resort fallback to a very basic model
+              completion = await groq.chat.completions.create({
+                messages: [
+                  { role: "system", content: agentPersonality.systemPrompt },
+                  { role: "user", content: prompt }
+                ],
+                model: "llama3-8b-8192",
+                temperature: agentPersonality.temperature ? parseFloat(agentPersonality.temperature) : 0.7,
+                max_tokens: 500,
+                stream: false
+              });
+            }
           } else {
             throw error; // Re-throw if it's not a model availability issue
           }
