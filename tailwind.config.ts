@@ -8,6 +8,10 @@ export default {
       fontSize: {
         'xxs': '0.625rem', // 10px - Ultra small text
       },
+      zIndex: {
+        '-5': '-5',
+        '-10': '-10',
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
