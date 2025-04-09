@@ -251,8 +251,8 @@ async function fetchGroqModels(): Promise<any[]> {
       return cachedGroqModels;
     }
     
-    // Make API request to get available models
-    const response = await fetch('https://api.groq.com/openai/v1/models', {
+    // Make API request to get available models using internal API
+    const response = await fetch('https://api.groq.com/internal/v1/models', {
       headers: {
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       }
@@ -263,19 +263,27 @@ async function fetchGroqModels(): Promise<any[]> {
     }
     
     const data = await response.json();
+    console.log("Groq models response:", JSON.stringify(data));
+    
+    // Check which format the response has - internal API has different structure
+    const models = Array.isArray(data) ? data : (data.data || []);
     
     // Filter and format models
-    cachedGroqModels = data.data
-      .filter((model: any) => 
+    cachedGroqModels = models
+      .filter((model: any) => {
+        const id = model.id || model.model_id || "";
         // Only include LLM models, exclude audio models
-        !model.id.includes('whisper') && 
-        !model.id.includes('distil-whisper'))
-      .map((model: any) => ({
-        id: model.id,
-        name: formatModelName(model.id),
-        contextWindow: model.context_window,
-        owner: model.owned_by
-      }));
+        return !id.includes('whisper') && !id.includes('distil-whisper');
+      })
+      .map((model: any) => {
+        const id = model.id || model.model_id || "";
+        return {
+          id: id,
+          name: formatModelName(id),
+          contextWindow: model.context_window || model.context_length || 8192,
+          owner: model.owned_by || model.provider || "Unknown"
+        };
+      });
     
     lastModelFetch = Date.now();
     return cachedGroqModels;
