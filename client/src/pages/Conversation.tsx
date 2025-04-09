@@ -103,10 +103,10 @@ export default function ConversationPage() {
       }
       
       // Start orchestration via API
-      const response = await apiRequest("POST", "/api/orchestrate", {
+      const response = await apiRequest("POST", "/api/conversations/orchestrate", {
         conversationId: parseInt(id),
         topic: conversation.topic,
-        agentIds: activeAgents.map(agent => agent.id),
+        agentPersonalityIds: activeAgents.map(agent => agent.id),
       });
       
       if (!response.ok) {
