@@ -191,13 +191,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <div className="relative min-h-screen overflow-hidden bg-black">
-          {/* Full-screen Neural Network Background */}
+          {/* Simplified Neural Network Background */}
           <div className="fixed inset-0 pointer-events-none" style={{ zIndex: -10 }}>
             <EnigmaNetworkViz 
               className="w-full h-full" 
-              nodeCount={100} 
-              edgeCount={150}
-              animationSpeed={0.3}
+              nodeCount={35} 
+              edgeCount={45}
+              animationSpeed={0.2}
             />
           </div>
           

@@ -716,14 +716,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Orchestrate conversation among multiple agents
   app.post("/api/conversations/orchestrate", async (req, res) => {
     try {
+      console.log("Received orchestration request:", JSON.stringify(req.body));
+      
       if (!req.isAuthenticated()) {
+        console.log("User not authenticated");
         return res.status(401).json({ error: "Authentication required" });
       }
       
       const userId = req.user?.id;
+      console.log("Authenticated user ID:", userId);
+      
       const { conversationId, topic, agentPersonalityIds, turnCount = 3 } = req.body;
+      console.log("Orchestration parameters:", { conversationId, topic, agentCount: agentPersonalityIds?.length, turnCount });
       
       if (!conversationId || !topic || !agentPersonalityIds || agentPersonalityIds.length < 2) {
+        console.log("Invalid request, missing required parameters");
         return res.status(400).json({ 
           error: "Invalid request. Need conversationId, topic, and at least 2 agent personality IDs." 
         });
@@ -764,7 +771,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Start conversation orchestration in background
+      console.log("Starting conversation orchestration in background");
       orchestrateConversation(conversationId, topic, agentPersonalityIds, turnCount, wss)
+        .then(() => console.log("Orchestration completed successfully!"))
         .catch(err => console.error("Orchestration error:", err));
       
       res.json({ success: true, message: "Conversation orchestration started" });
@@ -1188,8 +1197,12 @@ async function orchestrateConversation(
   turnCount: number,
   wss: WebSocketServer
 ) {
+  console.log("Starting orchestration:", { conversationId, topic, agentCount: agentPersonalityIds.length, turnCount });
+  
   try {
     const conversation = await storage.getConversation(conversationId);
+    console.log("Fetched conversation:", conversation ? `ID ${conversation.id}, Active: ${conversation.isActive}` : "Not found");
+    
     if (!conversation || !conversation.isActive) {
       console.error("Cannot orchestrate: conversation not found or not active");
       return;

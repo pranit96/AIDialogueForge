@@ -113,34 +113,40 @@ export default function EnigmaNetworkViz({
     return () => window.removeEventListener('resize', handleResize);
   }, [nodeCount, edgeCount, animationSpeed]);
   
-  // Animation loop
+  // Optimized animation loop with frame throttling
   useEffect(() => {
     if (nodes.length === 0) return;
     
-    const animate = () => {
+    let lastFrameTime = 0;
+    const targetFPS = 24; // Limit to 24 FPS for better performance
+    const frameInterval = 1000 / targetFPS;
+    
+    const animate = (timestamp: number) => {
+      // Skip frames to maintain target FPS
+      if (timestamp - lastFrameTime < frameInterval) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+      
+      lastFrameTime = timestamp;
+      
       setNodes(prevNodes => {
         return prevNodes.map(node => {
-          // Update position with smoother, more mysterious movement
+          // More efficient movement calculations
           let newX = node.x + node.vx;
           let newY = node.y + node.vy;
           
-          // Occasionally change velocity slightly for more organic movement
-          const velocityChange = Math.random() > 0.99;
-          let newVx = velocityChange ? 
-            node.vx + (Math.random() - 0.5) * 0.05 * animationSpeed : 
-            node.vx;
-          let newVy = velocityChange ? 
-            node.vy + (Math.random() - 0.5) * 0.05 * animationSpeed : 
-            node.vy;
+          // Reduce random velocity changes for better performance
+          const velocityChange = Math.random() > 0.995;
+          let newVx = node.vx;
+          let newVy = node.vy;
           
-          // Dampen speed if it gets too fast
-          const speed = Math.sqrt(newVx * newVx + newVy * newVy);
-          if (speed > animationSpeed * 0.8) {
-            newVx = (newVx / speed) * animationSpeed * 0.8;
-            newVy = (newVy / speed) * animationSpeed * 0.8;
+          if (velocityChange) {
+            newVx = node.vx + (Math.random() - 0.5) * 0.03 * animationSpeed;
+            newVy = node.vy + (Math.random() - 0.5) * 0.03 * animationSpeed;
           }
           
-          // Bounce off edges
+          // Simple boundary checks
           if (newX < 0 || newX > containerSize.width) {
             newVx = -newVx;
             newX = newX < 0 ? 0 : containerSize.width;
@@ -190,7 +196,7 @@ export default function EnigmaNetworkViz({
       {/* Mysterious background atmosphere */}
       <div className="absolute inset-0 bg-gradient-radial from-shadow to-abyss opacity-40 pointer-events-none"></div>
       
-      {/* Enhanced Edges with animation and glow */}
+      {/* Simplified Edges */}
       {edges.map((edge, index) => {
         const sourceNode = nodes[edge.source];
         const targetNode = nodes[edge.target];
@@ -203,57 +209,27 @@ export default function EnigmaNetworkViz({
         const length = Math.sqrt(dx * dx + dy * dy);
         const angle = Math.atan2(dy, dx) * (180 / Math.PI);
         
-        // Determine if this edge is connected to the hovered node
+        // Simplified hover detection
         const isHoveredEdge = hoverNode !== null && (hoverNode === edge.source || hoverNode === edge.target);
         
-        // Enhanced opacity calculation
-        let opacity = edge.type === 'important' ? 0.4 : 
-                      edge.type === 'normal' ? 0.25 : 0.15;
+        // Simplified styling
+        let baseOpacity = edge.type === 'important' ? 0.4 : edge.type === 'normal' ? 0.25 : 0.15;
+        let opacity = isHoveredEdge ? baseOpacity * 2 : baseOpacity;
         
-        // Enhance opacity if either connected node is hovered
-        if (isHoveredEdge) {
-          opacity = edge.type === 'important' ? 0.8 : 
-                    edge.type === 'normal' ? 0.6 : 0.4;
-        }
+        // Use a simpler gradient for better performance
+        const gradient = edge.type === 'important' 
+          ? 'linear-gradient(90deg, rgba(123, 43, 254, 0.6), rgba(226, 73, 190, 0.6))' 
+          : 'linear-gradient(90deg, rgba(123, 43, 254, 0.4), rgba(61, 145, 255, 0.4))';
         
-        // Ethereal energy gradient styles for edges
-        let gradient;
-        let edgeShadow;
-        let filter = 'none';
-        let backgroundSize = '100% 100%';
-        
-        if (edge.type === 'important') {
-          gradient = 'linear-gradient(90deg, rgba(123, 43, 254, 0.7), rgba(226, 73, 190, 0.7), rgba(123, 43, 254, 0.7))';
-          edgeShadow = '0 0 10px rgba(123, 43, 254, 0.4), 0 0 20px rgba(123, 43, 254, 0.2)';
-          backgroundSize = '200% 100%';
-        } else if (edge.type === 'normal') {
-          gradient = 'linear-gradient(90deg, rgba(123, 43, 254, 0.5), rgba(61, 145, 255, 0.5), rgba(123, 43, 254, 0.5))';
-          edgeShadow = '0 0 8px rgba(123, 43, 254, 0.25), 0 0 15px rgba(123, 43, 254, 0.1)';
-          backgroundSize = '200% 100%';
-        } else {
-          gradient = 'linear-gradient(90deg, rgba(30, 30, 38, 0.4), rgba(61, 145, 255, 0.4), rgba(30, 30, 38, 0.4))';
-          edgeShadow = '0 0 5px rgba(61, 145, 255, 0.15), 0 0 10px rgba(61, 145, 255, 0.05)';
-          backgroundSize = '200% 100%';
-        }
-        
-        // Enhance effects for hovered edges with mysterious glow
-        if (isHoveredEdge) {
-          filter = 'saturate(1.5) brightness(1.2)';
-          
-          edgeShadow = edge.type === 'important' ? 
-            '0 0 15px rgba(123, 43, 254, 0.6), 0 0 25px rgba(226, 73, 190, 0.4), 0 0 40px rgba(123, 43, 254, 0.2)' : 
-            edge.type === 'normal' ? 
-            '0 0 12px rgba(123, 43, 254, 0.5), 0 0 20px rgba(61, 145, 255, 0.3), 0 0 35px rgba(123, 43, 254, 0.15)' : 
-            '0 0 10px rgba(61, 145, 255, 0.4), 0 0 20px rgba(30, 30, 38, 0.2), 0 0 30px rgba(61, 145, 255, 0.1)';
-        }
-        
-        // Animation classes for energy flow effect
-        const animationClass = isHoveredEdge ? 'animate-energy-flow' : '';
+        // Simpler shadow
+        const edgeShadow = isHoveredEdge 
+          ? '0 0 8px rgba(123, 43, 254, 0.4)' 
+          : 'none';
         
         return (
           <div
             key={`edge-${index}`}
-            className={`nexus-edge ${animationClass}`}
+            className="nexus-edge"
             style={{
               left: `${sourceNode.x}px`,
               top: `${sourceNode.y}px`,
@@ -261,80 +237,36 @@ export default function EnigmaNetworkViz({
               height: isHoveredEdge ? '2px' : '1px',
               transform: `rotate(${angle}deg)`,
               background: gradient,
-              backgroundSize: backgroundSize,
               boxShadow: edgeShadow,
-              filter: filter,
-              animationDelay: `${edge.delay}s`,
               opacity,
               transformOrigin: 'left center',
-              transition: 'opacity 0.3s ease, box-shadow 0.3s ease, height 0.3s ease, filter 0.3s ease'
             }}
           />
         );
       })}
       
-      {/* Nodes */}
+      {/* Simplified Nodes */}
       {nodes.map(node => {
-        // Determine node appearance based on type and hover state
+        // Simplified hover state
         const isHovered = hoverNode === node.id;
-        const connectedEdges = edges.filter(e => e.source === node.id || e.target === node.id);
-        const isConnectedToHover = hoverNode !== null && 
-          connectedEdges.some(e => e.source === hoverNode || e.target === hoverNode);
         
-        let nodeColor;
-        let nodeShadow;
+        // Simplified colors - reduced variety for better performance
+        const nodeColor = node.type === 'primary' 
+          ? 'rgba(123, 43, 254, 0.85)'  // Purple
+          : 'rgba(226, 73, 190, 0.85)'; // Pink
         
-        // Cosmic ethereal color settings based on node type
-        if (node.type === 'primary') {
-          nodeColor = 'rgba(123, 43, 254, 0.85)'; // Vivid purple
-          nodeShadow = '0 0 12px rgba(123, 43, 254, 0.6)';
-        } else if (node.type === 'secondary') {
-          nodeColor = 'rgba(226, 73, 190, 0.85)'; // Vivid pink
-          nodeShadow = '0 0 12px rgba(226, 73, 190, 0.6)';
-        } else {
-          nodeColor = 'rgba(61, 145, 255, 0.85)'; // Vivid blue
-          nodeShadow = '0 0 12px rgba(61, 145, 255, 0.6)';
-        }
+        // Simplified shadow - only applied on hover
+        const nodeShadow = isHovered 
+          ? '0 0 15px rgba(123, 43, 254, 0.6)' 
+          : 'none';
         
-        let nodeSize = node.size;
-        let nodeOpacity = node.type === 'primary' ? 0.75 : 
-                         node.type === 'secondary' ? 0.8 : 0.9;
-        
-        // Mysterious filter effects
-        let nodeFilter = 'blur(0.5px)';
-        
-        // Enhance appearance when hovered or connected to hovered node
-        if (isHovered) {
-          nodeSize *= 2.5;
-          nodeOpacity = 1;
-          nodeFilter = 'blur(0px) contrast(1.2)';
-          
-          // Cosmic glow for hovered nodes
-          nodeShadow = node.type === 'primary' ? 
-            '0 0 20px rgba(123, 43, 254, 0.9), 0 0 40px rgba(123, 43, 254, 0.4), 0 0 60px rgba(123, 43, 254, 0.2)' : 
-            node.type === 'secondary' ? 
-            '0 0 20px rgba(226, 73, 190, 0.9), 0 0 40px rgba(226, 73, 190, 0.4), 0 0 60px rgba(226, 73, 190, 0.2)' : 
-            '0 0 20px rgba(61, 145, 255, 0.9), 0 0 40px rgba(61, 145, 255, 0.4), 0 0 60px rgba(61, 145, 255, 0.2)';
-        } else if (isConnectedToHover) {
-          nodeSize *= 1.8;
-          nodeOpacity = 0.95;
-          nodeFilter = 'blur(0px) contrast(1.1)';
-          
-          // Enhanced ethereal glow for connected nodes
-          nodeShadow = node.type === 'primary' ? 
-            '0 0 15px rgba(123, 43, 254, 0.8), 0 0 30px rgba(123, 43, 254, 0.3), 0 0 45px rgba(123, 43, 254, 0.1)' : 
-            node.type === 'secondary' ? 
-            '0 0 15px rgba(226, 73, 190, 0.8), 0 0 30px rgba(226, 73, 190, 0.3), 0 0 45px rgba(226, 73, 190, 0.1)' : 
-            '0 0 15px rgba(61, 145, 255, 0.8), 0 0 30px rgba(61, 145, 255, 0.3), 0 0 45px rgba(61, 145, 255, 0.1)';
-        }
-        
-        // Determine animation class
-        const animationClass = isHovered ? 'animate-neuron-pulse' : '';
+        // Simplified size adjustments
+        const nodeSize = isHovered ? node.size * 2 : node.size;
         
         return (
           <div
             key={`node-${node.id}`}
-            className={`nexus-node ${animationClass}`}
+            className="nexus-node"
             style={{
               left: `${node.x}px`,
               top: `${node.y}px`,
@@ -342,12 +274,8 @@ export default function EnigmaNetworkViz({
               height: `${nodeSize}px`,
               backgroundColor: nodeColor,
               boxShadow: nodeShadow,
-              filter: nodeFilter,
-              animationDelay: `${node.pulseDelay}s`,
-              opacity: nodeOpacity,
-              zIndex: isHovered ? 10 : 1,
-              transition: 'transform 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67), opacity 0.3s ease, width 0.3s ease, height 0.3s ease, box-shadow 0.3s ease, filter 0.5s ease',
-              transform: isHovered ? 'scale(1.2)' : isConnectedToHover ? 'scale(1.1)' : 'scale(1)'
+              opacity: 0.8,
+              transform: isHovered ? 'scale(1.2)' : 'scale(1)'
             }}
             onMouseEnter={() => handleNodeHover(node.id)}
             onMouseLeave={handleNodeLeave}
