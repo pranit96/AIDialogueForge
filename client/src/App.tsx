@@ -1,10 +1,12 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
-import Home from "@/pages/Home";
 import AuthPage from "@/pages/auth-page";
+import KnowledgeQuery from "@/pages/KnowledgeQuery";
+import Conversation from "@/pages/Conversation";
+import Settings from "@/pages/Settings";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
@@ -12,7 +14,12 @@ import { useEffect, useState } from "react";
 function Router() {
   return (
     <Switch>
-      <ProtectedRoute path="/" component={Home} />
+      <Route path="/">
+        <Redirect to="/query" />
+      </Route>
+      <ProtectedRoute path="/query" component={KnowledgeQuery} />
+      <ProtectedRoute path="/conversation/:id" component={Conversation} />
+      <ProtectedRoute path="/settings" component={Settings} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

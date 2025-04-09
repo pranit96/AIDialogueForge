@@ -96,8 +96,8 @@ const setupWebSocketServer = (server: Server) => {
   const connectionCleanupInterval = setInterval(() => {
     try {
       wss.clients.forEach((ws) => {
-        // Check for closed or closing states (readyState !== 1)
-        if (ws.readyState !== 1) {
+        // Check for closed or closing states
+        if (ws.readyState !== WebSocket.OPEN) {
           try {
             ws.terminate();
           } catch (e) {
@@ -124,7 +124,7 @@ const setupWebSocketServer = (server: Server) => {
     
     // Add ping interval to keep connection alive through proxies (more frequent)
     const pingInterval = setInterval(() => {
-      if (ws.readyState === 1) { // WebSocket.OPEN = 1
+      if (ws.readyState === WebSocket.OPEN) {
         try {
           ws.ping();
         } catch (err) {
@@ -132,16 +132,16 @@ const setupWebSocketServer = (server: Server) => {
           
           // Try to reconnect if ping fails
           try {
-            // Check if the socket is still OPEN (readyState 1)
-            if (ws.readyState === 1) {
+            // Check if the socket is still OPEN
+            if (ws.readyState === WebSocket.OPEN) {
               ws.terminate();
             }
           } catch (termErr) {
             console.error("Failed to terminate connection after ping failure:", termErr);
           }
         }
-      } else if (ws.readyState !== 1) {
-        // If socket is not OPEN (readyState 1), clean up
+      } else {
+        // If socket is not OPEN, clean up
         clearInterval(pingInterval);
         connectedClients.delete(clientId);
       }
@@ -193,7 +193,7 @@ const setupWebSocketServer = (server: Server) => {
       console.error("WebSocket connection error:", error);
       try {
         // Try to notify client of the error
-        if (ws.readyState === 1) { // WebSocket.OPEN = 1
+        if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({
             type: "CONNECTION_ERROR",
             data: { message: "Connection error detected" }
@@ -228,7 +228,7 @@ const setupWebSocketServer = (server: Server) => {
 // Send message to all connected clients
 const broadcastMessage = (wss: WebSocketServer, type: string, data: any) => {
   wss.clients.forEach((client) => {
-    if (client.readyState === 1) { // WebSocket.OPEN = 1
+    if (client.readyState === WebSocket.OPEN) {
       try {
         client.send(JSON.stringify({ type, data }));
       } catch (err) {
